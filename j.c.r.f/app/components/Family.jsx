@@ -10,10 +10,9 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
 
   const onSubmit = (data) => {
     console.log(data);
-    // Handle form submission
   };
 
-  const InputField = ({ name, label, type = 'text', required = false }) => (
+  const InputField = ({ name, label, type = 'text', required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -31,21 +30,23 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const RadioGroup = ({ name, label, options, required = false }) => (
+  const RadioGroup = ({ name, label, options, required = false, number }) => (
     <Controller
       name={name}
       control={control}
       rules={{ required }}
       render={({ field }) => (
         <div className={personalStyles.radioGroupContainer}>
-          <label className={personalStyles.radioGroupLabel}>{label}</label>
+          <label className={personalStyles.radioGroupLabel}>
+            {number}. {label} {required && <span className="text-red-500">*</span>}
+          </label>
           <div className={personalStyles.radioGroup}>
             {options.map((option, index) => (
               <label key={index} className={personalStyles.radioLabel}>
@@ -78,27 +79,29 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
         <h3 className={personalStyles.subHeading}>Family Section</h3>
         
         <form onSubmit={handleSubmit(onSubmit)} className={personalStyles.form}>
-          <InputField name="sponsorName" label="Sponsor's Name" required />
+          <InputField name="sponsorName" label="Sponsor's Name" required number="42" />
           
           <RadioGroup
             name="familyType"
             label="Type of Family"
             options={['Nuclear', 'Polygamy']}
             required
+            number="43"
           />
           
-          <InputField name="sponsorOccupation" label="Sponsor's occupation" required />
-          <InputField name="sponsorPhone" label="Sponsor's phone no." type="tel" required />
+          <InputField name="sponsorOccupation" label="Sponsor's occupation" required number="44" />
+          <InputField name="sponsorPhone" label="Sponsor's phone no." type="tel" required number="45" />
           
           <RadioGroup
             name="parentsLivingTogether"
             label="Are both parents living together?"
             options={['Yes', 'No']}
             required
+            number="46"
           />
           
           {parentsLivingTogether === 'No' && (
-            <InputField name="parentsNotLivingTogetherReason" label="If no, why?" />
+            <InputField name="parentsNotLivingTogetherReason" label="If no, why?" number="47" />
           )}
           
           <RadioGroup
@@ -106,6 +109,7 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
             label="Both parents alive?"
             options={['Yes', 'No']}
             required
+            number="48"
           />
           
           {bothParentsAlive === 'No' && (
@@ -114,6 +118,7 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
               label="If no, which of them is?"
               options={['Father', 'Mother']}
               required
+              number="49"
             />
           )}
 

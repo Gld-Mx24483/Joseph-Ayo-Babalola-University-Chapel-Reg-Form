@@ -14,7 +14,7 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
     console.log(data);
   };
 
-  const InputField = ({ name, label, type = 'text', required = false }) => (
+  const InputField = ({ name, label, type = 'text', required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -32,14 +32,14 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const DateInputField = ({ name, label, required = false }) => (
+  const DateInputField = ({ name, label, required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -56,21 +56,23 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={personalStyles.dateLabel}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const RadioGroup = ({ name, label, options }) => (
+  const RadioGroup = ({ name, label, options, required = false, number }) => (
     <Controller
       name={name}
       control={control}
-      rules={{ required: true }}
+      rules={{ required }}
       render={({ field }) => (
         <div className={personalStyles.radioGroupContainer}>
-          <label className={personalStyles.radioGroupLabel}>{label}</label>
+          <label className={personalStyles.radioGroupLabel}>
+            {number}. {label} {required && <span className="text-red-500">*</span>}
+          </label>
           <div className={personalStyles.radioGroup}>
             {options.map((option, index) => (
               <label key={index} className={personalStyles.radioLabel}>
@@ -100,16 +102,18 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
         <h3 className={personalStyles.subHeading}>Personal Section</h3>
         
         <form onSubmit={handleSubmit(onSubmit)} className={personalStyles.form}>
-          <InputField name="firstName" label="1. First Name" required />
-          <InputField name="surname" label="2. Surname" required />
-          <InputField name="middleName" label="3. Middle Name" required />
+          <InputField name="firstName" label="First Name" required number="1" />
+          <InputField name="surname" label="Surname" required number="2" />
+          <InputField name="middleName" label="Middle Name" required number="3" />
 
           <Controller
             name="passport"
             control={control}
             render={({ field }) => (
               <div className={personalStyles.inputGroup}>
-                <label className={personalStyles.fileInputLabel}>4. Upload your passport</label>
+                <label className={personalStyles.fileInputLabel}>
+                  4. Upload your passport <span className="text-red-500">*</span>
+                </label>
                 <div 
                   className={personalStyles.passportContainer}
                   onClick={() => document.getElementById('passportUpload').click()}
@@ -149,17 +153,19 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
 
           <RadioGroup
             name="sex"
-            label="5. Sex"
+            label="Sex"
             options={['Male', 'Female']}
+            required
+            number="5"
           />
 
-          <DateInputField name="dob" label="6. Date of Birth" required />
-          <InputField name="homeTown" label="7. Home Town" required />
-          <InputField name="stateOfOrigin" label="8. State of Origin" required />
-          <InputField name="nationality" label="9. Nationality" required />
-          <InputField name="phoneNo" label="10. Phone No" type="tel" required />
-          <InputField name="whatsappNo" label="11. WhatsApp Phone No" type="tel" required />
-          <InputField name="email" label="12. Email Address" type="email" required />
+          <DateInputField name="dob" label="Date of Birth" required number="6" />
+          <InputField name="homeTown" label="Home Town" required number="7" />
+          <InputField name="stateOfOrigin" label="State of Origin" required number="8" />
+          <InputField name="nationality" label="Nationality" required number="9" />
+          <InputField name="phoneNo" label="Phone No" type="tel" required number="10" />
+          <InputField name="whatsappNo" label="WhatsApp Phone No" type="tel" required number="11" />
+          <InputField name="email" label="Email Address" type="email" required number="12" />
 
           <Controller
             name="address"
@@ -177,26 +183,28 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
                   htmlFor="address"
                   className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
                 >
-                  13. Present Home Address
+                  13. Present Home Address <span className="text-red-500">*</span>
                 </label>
               </div>
             )}
           />
 
-          <InputField name="hobbies" label="14. Hobbies" />
+          <InputField name="hobbies" label="Hobbies" number="14" />
 
           <RadioGroup
             name="level"
-            label="15. Level"
+            label="Level"
             options={['100', '200', '300', '400', '500']}
+            required
+            number="15"
           />
 
-          <InputField name="hostel" label="16. Hostel, Block & Room No" />
-          <InputField name="matricNo" label="17. Matric No or Registration Number" />
+          <InputField name="hostel" label="Hostel, Block & Room No" number="16" />
+          <InputField name="matricNo" label="Matric No or Registration Number" number="17" />
 
           <RadioGroup
             name="college"
-            label="18. College"
+            label="College"
             options={[
               'Agriculture and Natural Science',
               'Health Science',
@@ -205,9 +213,11 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
               'Humanities and Social Science',
               'Environmental Science'
             ]}
+            required
+            number="18"
           />
 
-          <InputField name="department" label="19. Department" required />
+          <InputField name="department" label="Department" required number="19" />
 
           <div className={personalStyles.navigation}>
             <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>

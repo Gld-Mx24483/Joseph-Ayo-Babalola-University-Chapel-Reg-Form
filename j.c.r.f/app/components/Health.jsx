@@ -13,7 +13,7 @@ const Health = ({ isOpen, onClose, onNext, onPrevious }) => {
     // Handle form submission
   };
 
-  const InputField = ({ name, label, type = 'text', required = false }) => (
+  const InputField = ({ name, label, type = 'text', required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -31,21 +31,23 @@ const Health = ({ isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const RadioGroup = ({ name, label, options, required = false }) => (
+  const RadioGroup = ({ name, label, options, required = false, number }) => (
     <Controller
       name={name}
       control={control}
       rules={{ required }}
       render={({ field }) => (
         <div className={personalStyles.radioGroupContainer}>
-          <label className={personalStyles.radioGroupLabel}>{label}</label>
+          <label className={personalStyles.radioGroupLabel}>
+            {number}. {label} {required && <span className="text-red-500">*</span>}
+          </label>
           <div className={personalStyles.radioGroup}>
             {options.map((option, index) => (
               <label key={index} className={personalStyles.radioLabel}>
@@ -82,10 +84,11 @@ const Health = ({ isOpen, onClose, onNext, onPrevious }) => {
             label="Have you had any physical defect?"
             options={['Yes', 'No']}
             required
+            number="49"
           />
           
           {hasPhysicalDefect === 'Yes' && (
-            <InputField name="physicalDefectType" label="If yes, which kind?" />
+            <InputField name="physicalDefectType" label="If yes, which kind?" number="50" />
           )}
           
           <RadioGroup
@@ -93,6 +96,7 @@ const Health = ({ isOpen, onClose, onNext, onPrevious }) => {
             label="Are you often ill?"
             options={['Yes', 'No']}
             required
+            number="51"
           />
           
           <RadioGroup
@@ -100,6 +104,7 @@ const Health = ({ isOpen, onClose, onNext, onPrevious }) => {
             label="Are you on special diet or treatment?"
             options={['Yes', 'No']}
             required
+            number="52"
           />
 
           <div className={personalStyles.navigation}>

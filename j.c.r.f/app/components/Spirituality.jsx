@@ -1,19 +1,26 @@
-//Spirituality.jsx
+// Spirituality.jsx
 import { X } from 'lucide-react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
 
-const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
-  const { control, handleSubmit } = useForm();
+const Spirituality = ({ isOpen, onClose, onNext, onPrevious }) => {
+  const { control, handleSubmit, watch } = useForm();
+  const watchAttendChurch = useWatch({ control, name: 'attendChurch' });
+  const watchNewBirth = useWatch({ control, name: 'newBirth' });
+  const watchWaterBaptism = useWatch({ control, name: 'waterBaptism' });
+  const watchHolySpirit = useWatch({ control, name: 'holySpirit' });
+  const watchChurchDiscipline = useWatch({ control, name: 'churchDiscipline' });
+  const watchLeadershipTraining = useWatch({ control, name: 'leadershipTraining' });
+  const watchCommunicant = useWatch({ control, name: 'communicant' });
+
 
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
     console.log(data);
-    // Handle form submission
   };
 
-  const InputField = ({ name, label, type = 'text', required = false }) => (
+  const InputField = ({ name, label, type = 'text', required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -31,14 +38,14 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const DateInputField = ({ name, label, required = false }) => (
+  const DateInputField = ({ name, label, required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -55,21 +62,23 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={personalStyles.dateLabel}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
     />
   );
 
-  const RadioGroup = ({ name, label, options, required = false }) => (
+  const RadioGroup = ({ name, label, options, required = false, number }) => (
     <Controller
       name={name}
       control={control}
       rules={{ required }}
       render={({ field }) => (
         <div className={personalStyles.radioGroupContainer}>
-          <label className={personalStyles.radioGroupLabel}>{label}</label>
+          <label className={personalStyles.radioGroupLabel}>
+            {number}. {label} {required && <span className="text-red-500">*</span>}
+          </label>
           <div className={personalStyles.radioGroup}>
             {options.map((option, index) => (
               <label key={index} className={personalStyles.radioLabel}>
@@ -89,7 +98,7 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
     />
   );
 
-  const TextArea = ({ name, label, required = false }) => (
+  const TextArea = ({ name, label, required = false, number }) => (
     <Controller
       name={name}
       control={control}
@@ -106,7 +115,7 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
           >
-            {label}
+            {number}. {label} {required && <span className="text-red-500">*</span>}
           </label>
         </div>
       )}
@@ -128,71 +137,123 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             label="Do you currently attend any church?"
             options={['Yes', 'No']}
             required
+            number="20"
           />
-          <InputField name="churchName" label="If yes, Name of church" />
-          <DateInputField name="churchStartDate" label="When did you start attending the church?" type="date" />
+          <InputField
+            name="churchName"
+            label="If yes, Name of church"
+            required={watchAttendChurch === 'Yes'}
+            number="21"
+          />
+          <DateInputField
+            name="churchStartDate"
+            label="When did you start attending the church?"
+            required={watchAttendChurch === 'Yes'}
+            number="22"
+          />
           
           <RadioGroup
             name="newBirth"
             label="Have you had the New Birth?"
             options={['Yes', 'No']}
             required
+            number="23"
           />
-          <InputField name="newBirthDate" label="If yes, when" />
-          <TextArea name="salvationExperience" label="Describe your salvation experience." />
+          <InputField
+            name="newBirthDate"
+            label="If yes, when"
+            required={watchNewBirth === 'Yes'}
+            number="24"
+          />
+          <TextArea
+            name="salvationExperience"
+            label="Describe your salvation experience"
+            required={watchNewBirth === 'Yes'}
+            number="25"
+          />
           
           <RadioGroup
             name="waterBaptism"
             label="Have you been baptized in water?"
             options={['Yes', 'No']}
             required
+            number="26"
           />
-          <InputField name="waterBaptismDate" label="If yes, when?" />
+          <InputField
+            name="waterBaptismDate"
+            label="If yes, when?"
+            required={watchWaterBaptism === 'Yes'}
+            number="27"
+          />
           
           <RadioGroup
             name="communicant"
             label="Are you a communicant?"
             options={['Yes', 'No']}
             required
+            number="28"
           />
-          <InputField name="notCommunicantReason" label="If Not, why?" />
+          <InputField 
+          name="notCommunicantReason" 
+          label="If No, why?" 
+          required={watchCommunicant === 'No'}
+          number="29"   />
           
           <RadioGroup
             name="holySpirit"
             label="Have you received the baptism of the Holy spirit?"
             options={['Yes', 'No']}
             required
+            number="30"
           />
-          <InputField name="notHolySpiritReason" label="If Not, why?" />
+          <InputField
+            name="notHolySpiritReason"
+            label="If No, why?"
+            required={watchHolySpirit === 'No'}
+            number="31"
+          />
           
-          <InputField name="spiritualGifts" label="What are your spiritual gift(s)?" />
+          <InputField name="spiritualGifts" label="What are your spiritual gift(s)?" number="32" />
           
           <RadioGroup
             name="churchDiscipline"
             label="Have you been disciplined by the Church before?"
             options={['Yes', 'No']}
             required
+            number="33"
           />
-          <InputField name="disciplineReason" label="If yes, state the reason." />
+          <InputField
+            name="disciplineReason"
+            label="If yes, state the reason"
+            required={watchChurchDiscipline === 'Yes'}
+            number="34"
+          />
           
           <RadioGroup
             name="leadershipTraining"
             label="Have you attended any church leadership training before?"
             options={['Yes', 'No']}
             required
+            number="35"
           />
-          <InputField name="leadershipTrainingDetails" label="If yes, where and when?" />
+          <InputField
+            name="leadershipTrainingDetails"
+            label="If yes, where and when?"
+            required={watchLeadershipTraining === 'Yes'}
+            number="36"
+          />
           
-          <InputField name="pastorName" label="Name of your Pastor or spiritual leader" required />
-          <InputField name="pastorPhone" label="Phone No. of your Pastor or spiritual leader" type="tel" required />
+          <InputField name="pastorName" label="Name of your Pastor or spiritual leader" required number="37" />
+          <InputField name="pastorPhone" label="Phone No. of your Pastor or spiritual leader" type="tel" required number="38" />
           
-          <TextArea name="lifeVision" label="Describe your vision or purpose in life" required />
+          <TextArea name="lifeVision" label="Describe your vision or purpose in life" required number="39" />
           
           <RadioGroup
             name="obeyInstructions"
             label="Are you going to willingly obey instruction, follow the standard and dress codes of the chapel while in this university?"
             options={['Yes', 'No']}
             required
+            number="40"
           />
           
           <RadioGroup
@@ -200,11 +261,12 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             label="Will you be willing to contribute your time, talents and treasure for the progress of the Chapel as a student?"
             options={['Yes', 'No']}
             required
+            number="41"
           />
 
           <div className={personalStyles.navigation}>
-          <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
-          <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
+            <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
+            <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
           </div>
         </form>
       </div>
