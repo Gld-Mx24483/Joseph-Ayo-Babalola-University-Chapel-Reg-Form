@@ -72,7 +72,7 @@ const onSubmit = (data) => {
         <button onClick={onClose} className={personalStyles.closeButton}>
           <X size={20} className="sm:w-6 sm:h-6" />
         </button>
-        <h2 className={personalStyles.mainHeading}>STUDENT'S REGISTRATION FORM 2024/25 SESSION</h2>
+        <h2 className={personalStyles.mainHeading}>STUDENT&#39;S REGISTRATION FORM 2024/25 SESSION</h2>
         <h3 className={personalStyles.subHeading}>Personal Section</h3>
         
         <form onSubmit={handleSubmit(onSubmit)} className={personalStyles.form}>
