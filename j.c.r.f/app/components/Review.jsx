@@ -24,17 +24,28 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
         <button onClick={onClose} className={personalStyles.closeButton}>
           <X size={20} className="sm:w-6 sm:h-6" />
         </button>
-        <h2 className={personalStyles.mainHeading}>Review Your Answers</h2>
+        <div className="flex justify-between items-start mb-6">
+          <h2 className={personalStyles.mainHeading}>Review Your Answers</h2>
+          {formData.passport && (
+            <img 
+              src={URL.createObjectURL(formData.passport)} 
+              alt="Passport" 
+              className="w-32 h-40 object-cover rounded-md shadow-md"
+            />
+          )}
+        </div>
         
         <div className="mt-6 space-y-8">
           {sections.map((section, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-4">{section.title}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h3 className="text-2xl font-bold mb-4 text-blue-600 border-b-2 border-blue-200 pb-2">{section.title}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {section.fields.map((field) => (
                   <div key={field} className="flex flex-col">
                     <span className="text-sm font-medium text-gray-500">{formatLabel(field)}</span>
-                    <span className="mt-1">{formData[field] || 'N/A'}</span>
+                    <span className="mt-1 text-lg font-semibold text-gray-800 break-words">
+                      {formData[field] || 'N/A'}
+                    </span>
                   </div>
                 ))}
               </div>
