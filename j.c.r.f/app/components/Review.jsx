@@ -44,10 +44,19 @@ const ErrorDialog = ({ onClose }) => (
   </div>
 );
 
+const LoadingSpinner = () => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="relative">
+      <div className="w-20 h-20 border-4 border-blue-200 rounded-full"></div>
+      <div className="w-20 h-20 border-4 border-blue-500 rounded-full animate-spin absolute top-0 left-0 border-t-transparent"></div>
+    </div>
+  </div>
+);
 
 const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -65,17 +74,16 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
   };
 
   const handleSubmit = async () => {
+    setIsLoading(true);
     try {
       const formDataToSend = new FormData();
       
-      // Append all form fields to FormData
       Object.keys(formData).forEach(key => {
         if (key !== 'passport') {
           formDataToSend.append(key, formData[key]);
         }
       });
   
-      // Append passport file if it exists
       if (formData.passport) {
         formDataToSend.append('passport', formData.passport);
       }
@@ -89,9 +97,11 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
       });
   
       console.log('Form submitted successfully:', response.data);
+      setIsLoading(false);
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error submitting form:', error);
+      setIsLoading(false);
       setShowErrorDialog(true);
     }
   };
@@ -137,12 +147,24 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
           <button onClick={onEdit} className={`${personalStyles.navButton} bg-gray-500 hover:bg-gray-600`}>
             Edit
           </button>
-          <button onClick={handleSubmit} className={`${personalStyles.navButton} bg-green-500 hover:bg-green-600`}>
-            Submit
+          <button 
+            onClick={handleSubmit} 
+            className={`${personalStyles.navButton} bg-green-500 hover:bg-green-600 relative`}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center">
+                <span className="mr-2">Submitting</span>
+                <span className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></span>
+              </span>
+            ) : (
+              'Submit'
+            )}
           </button>
         </div>
       </div>
 
+      {isLoading && <LoadingSpinner />}
       {showSuccessDialog && <SuccessDialog onClose={() => { setShowSuccessDialog(false); onClose(); }} />}
       {showErrorDialog && <ErrorDialog onClose={() => setShowErrorDialog(false)} />}
     </div>

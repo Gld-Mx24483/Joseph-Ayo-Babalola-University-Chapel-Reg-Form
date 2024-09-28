@@ -208,12 +208,12 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
             name="college"
             label="College"
             options={[
-              'Agriculture and Natural Science',
-              'Health Science',
+              'Agriculture and Natural Sciences',
+              'Health Sciences',
               'Law',
-              'Management Science',
-              'Humanities and Social Science',
-              'Environmental Science'
+              'Management Sciences',
+              'Humanities and Social Sciences',
+              'Environmental Sciences'
             ]}
             required
             number="18"
