@@ -10,6 +10,7 @@ module.exports = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        navy: '#000112',
       },
       animation: {
         fadeIn: 'fadeIn 1.5s ease-out',
