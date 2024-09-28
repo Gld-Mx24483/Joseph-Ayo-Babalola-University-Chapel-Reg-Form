@@ -37,10 +37,10 @@ const Footer = () => {
           </a>
         </div>
         <Link href="/admin" passHref>
-          <span className="text-gray-400 hover:text-white cursor-pointer transition duration-300">
-            Admin
-          </span>
-        </Link>
+    <span className="text-gray-400 hover:text-white cursor-pointer transition duration-300">
+      Admin
+    </span>
+    </Link>
       </div>
     </footer>
   );
