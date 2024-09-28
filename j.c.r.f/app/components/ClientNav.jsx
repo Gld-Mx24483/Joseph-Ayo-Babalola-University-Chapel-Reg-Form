@@ -81,7 +81,7 @@ const ClientNav = () => {
             />
             <NavLink
               href="#contact"
-              text="Contact"
+              text="Form"
               onClick={() => scrollToSection('contact')}
               isActive={activeSection === 'contact'}
             />
