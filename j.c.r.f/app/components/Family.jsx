@@ -3,13 +3,15 @@ import { X } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
 
-const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
-  const { control, handleSubmit, watch } = useForm();
+const Family = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
+  const { control, handleSubmit, watch } = useForm({
+    defaultValues: initialData
+  });
 
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
-    console.log(data);
+    onNext(data);
   };
 
   const InputField = ({ name, label, type = 'text', required = false, number }) => (
@@ -124,7 +126,7 @@ const Family = ({ isOpen, onClose, onNext, onPrevious }) => {
 
           <div className={personalStyles.navigation}>
             <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
-            <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
+            <button type="submit" className={personalStyles.navButton}>Next</button>
           </div>
         </form>
       </div>

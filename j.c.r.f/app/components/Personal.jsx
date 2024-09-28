@@ -4,14 +4,16 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
 
-const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
-  const { control, handleSubmit } = useForm();
+const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
+  const { control, handleSubmit } = useForm({
+    defaultValues: initialData
+  });
   const [passportPreview, setPassportPreview] = useState(null);
 
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
-    console.log(data);
+    onNext(data);
   };
 
   const InputField = ({ name, label, type = 'text', required = false, number }) => (
@@ -220,8 +222,8 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
           <InputField name="department" label="Department" required number="19" />
 
           <div className={personalStyles.navigation}>
-            <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
-            <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
+          <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
+          <button type="submit" className={personalStyles.navButton}>Next</button>
           </div>
         </form>
       </div>

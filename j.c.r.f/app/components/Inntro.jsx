@@ -8,10 +8,12 @@ import Family from './Family';
 import Health from './Health';
 import { introStyles } from './IntroStyles';
 import Personal from './Personal';
+import Review from './Review';
 import Spirituality from './Spirituality';
 
 const Intro = () => {
   const [currentSection, setCurrentSection] = useState('closed');
+  const [formData, setFormData] = useState({});
 
   const handleOpenForm = () => {
     setCurrentSection('personal');
@@ -21,7 +23,8 @@ const Intro = () => {
     setCurrentSection('closed');
   };
 
-  const handleNextSection = () => {
+  const handleNextSection = (data) => {
+    setFormData(prevData => ({ ...prevData, ...data }));
     if (currentSection === 'personal') {
       setCurrentSection('spirituality');
     } else if (currentSection === 'spirituality') {
@@ -29,7 +32,6 @@ const Intro = () => {
     } else if (currentSection === 'family') {
       setCurrentSection('health');
     }
-    // Add more sections here as needed
   };
 
   const handlePreviousSection = () => {
@@ -42,6 +44,20 @@ const Intro = () => {
     } else if (currentSection === 'personal') {
       setCurrentSection('closed');
     }
+  };
+
+  const handleReview = (data) => {
+    setFormData(prevData => ({ ...prevData, ...data }));
+    setCurrentSection('review');
+  };
+
+  const handleEdit = () => {
+    setCurrentSection('personal');
+  };
+
+  const handleSubmit = () => {
+    console.log('Submitting form data:', formData);
+    setCurrentSection('closed');
   };
 
   return (
@@ -70,29 +86,38 @@ const Intro = () => {
         onClose={handleCloseForm}
         onNext={handleNextSection}
         onPrevious={handlePreviousSection}
+        initialData={formData}
       />
       <Spirituality 
         isOpen={currentSection === 'spirituality'} 
         onClose={handleCloseForm}
         onNext={handleNextSection}
         onPrevious={handlePreviousSection}
+        initialData={formData}
       />
       <Family 
         isOpen={currentSection === 'family'} 
         onClose={handleCloseForm}
         onNext={handleNextSection}
         onPrevious={handlePreviousSection}
+        initialData={formData}
       />
       <Health 
         isOpen={currentSection === 'health'} 
         onClose={handleCloseForm}
-        onNext={handleNextSection}
         onPrevious={handlePreviousSection}
+        onReview={handleReview}
+        initialData={formData}
+      />
+      <Review 
+        isOpen={currentSection === 'review'}
+        onClose={handleCloseForm}
+        formData={formData}
+        onEdit={handleEdit}
+        onSubmit={handleSubmit}
       />
     </section>
   );
 };
 
 export default Intro;
-
-//edit
