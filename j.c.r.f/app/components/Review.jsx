@@ -1,4 +1,5 @@
 //Review.jsx
+import axios from 'axios';
 import { AlertCircle, CheckCircle, X } from 'lucide-react';
 import { useState } from 'react';
 import { personalStyles } from './PersonalStyles';
@@ -65,9 +66,32 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
 
   const handleSubmit = async () => {
     try {
-      await onSubmit();
+      const formDataToSend = new FormData();
+      
+      // Append all form fields to FormData
+      Object.keys(formData).forEach(key => {
+        if (key !== 'passport') {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+  
+      // Append passport file if it exists
+      if (formData.passport) {
+        formDataToSend.append('passport', formData.passport);
+      }
+  
+      console.log('Data being sent to server:', Object.fromEntries(formDataToSend));
+  
+      const response = await axios.post('http://localhost:5000/api/submit-form', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      console.log('Form submitted successfully:', response.data);
       setShowSuccessDialog(true);
     } catch (error) {
+      console.error('Error submitting form:', error);
       setShowErrorDialog(true);
     }
   };
