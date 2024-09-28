@@ -1,4 +1,4 @@
-// ClientNav.jsx
+//ClientNav.jsx
 'use client';
 import { useEffect, useState } from 'react';
 import HamburgerMenu from './HamburgerMenu';
@@ -15,7 +15,12 @@ const ClientNav = () => {
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
+      const navHeight = 72; // Adjust this value based on your nav height
+      const sectionTop = section.getBoundingClientRect().top + window.pageYOffset - navHeight;
+      window.scrollTo({
+        top: sectionTop,
+        behavior: 'smooth'
+      });
     }
     setIsMenuOpen(false);
   };
@@ -47,19 +52,28 @@ const ClientNav = () => {
         <NavLink
           href="#home"
           text="Home"
-          onClick={() => scrollToSection('home')}
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('home');
+          }}
           isActive={activeSection === 'home'}
         />
         <NavLink
           href="#about"
           text="About Us"
-          onClick={() => scrollToSection('about')}
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('about');
+          }}
           isActive={activeSection === 'about'}
         />
         <NavLink
           href="#contact"
-          text="Form"
-          onClick={() => scrollToSection('contact')}
+          text="Contact"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('contact');
+          }}
           isActive={activeSection === 'contact'}
         />
       </div>
@@ -70,19 +84,28 @@ const ClientNav = () => {
             <NavLink
               href="#home"
               text="Home"
-              onClick={() => scrollToSection('home')}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('home');
+              }}
               isActive={activeSection === 'home'}
             />
             <NavLink
               href="#about"
               text="About Us"
-              onClick={() => scrollToSection('about')}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('about');
+              }}
               isActive={activeSection === 'about'}
             />
             <NavLink
               href="#contact"
-              text="Form"
-              onClick={() => scrollToSection('contact')}
+              text="Contact"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('contact');
+              }}
               isActive={activeSection === 'contact'}
             />
           </div>
@@ -93,37 +116,3 @@ const ClientNav = () => {
 };
 
 export default ClientNav;
-
-// import { useState } from 'react';
-// import HamburgerMenu from './HamburgerMenu';
-// import { NavLink, navStyles } from './NavStyles';
-
-// const ClientNav = () => {
-//   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-//   const toggleMenu = () => {
-//     setIsMenuOpen(!isMenuOpen);
-//   };
-
-//   return (
-//     <>
-//       <div className={navStyles.desktopMenu}>
-//         <NavLink href="#" text="Home" />
-//         <NavLink href="#" text="About Us" />
-//         <NavLink href="#" text="Contact" />
-//       </div>
-//       <HamburgerMenu isOpen={isMenuOpen} toggleMenu={toggleMenu} />
-//       {isMenuOpen && (
-//         <div className={navStyles.mobileMenuContainer}>
-//           <div className={navStyles.mobileMenu}>
-//             <NavLink href="#" text="Home" />
-//             <NavLink href="#" text="About Us" />
-//             <NavLink href="#" text="Contact" />
-//           </div>
-//         </div>
-//       )}
-//     </>
-//   );
-// };
-
-// export default ClientNav;
