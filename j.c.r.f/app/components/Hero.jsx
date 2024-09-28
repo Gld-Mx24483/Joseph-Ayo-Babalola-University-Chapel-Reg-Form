@@ -22,7 +22,7 @@ const Hero = () => {
       <div className={heroStyles.content}>
         <h1 className={heroStyles.title}>JABU CHAPLAINCY UNIT</h1>
         <div className={heroStyles.separator}></div>
-        <p className={heroStyles.subtitle}>STUDENT'S REGISTRATION FORM 2024/25 SESSION</p>
+        <p className={heroStyles.subtitle}>STUDENT&#39;S REGISTRATION FORM 2024/25 SESSION</p>
       </div>
     </div>
   );
