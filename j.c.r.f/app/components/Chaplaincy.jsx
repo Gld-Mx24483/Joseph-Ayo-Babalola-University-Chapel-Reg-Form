@@ -16,14 +16,14 @@ const Chaplaincy = () => {
             <div className={chaplaincyStyles.oluwasanmiImageContainer}>
               <Image
                 src={OluwasanmiImage}
-                alt="Pastor Johnson Oluwasanmi"
+                alt="Pastor Oluwasanmi Johnson"
                 layout="fill"
                 objectFit="cover"
                 className={chaplaincyStyles.oluwasanmiImage}
               />
             </div>
             <p className={chaplaincyStyles.imageCaption}>
-              Pastor Johnson Oluwasanmi (The University Chaplain, JABU)
+              Pastor Oluwasanmi Johnson (The University Chaplain, JABU)
             </p>
           </div>
           <div className={chaplaincyStyles.groupImageWrapper}>
@@ -35,7 +35,7 @@ const Chaplaincy = () => {
               className={chaplaincyStyles.image}
             />
             <p className={chaplaincyStyles.imageCaption}>
-              From the left; Pastor I. O. Olutimehin, Pastor (Dr) T. W. Olaosebikan, Pastor (Dr) P. O. Alokan, Pastor (Dr) S. F. Babalola, Pastor J. O. Oluwasanmi (University Chaplain), Pastor (Dr) S. M. O. Awoniyi, Pastor John Babalola, Pastor (Dr) J. A. O Magbagbeola
+              From the left; Pastor I. O. Olutimehin, Pastor (Dr) T. W. Olaosebikan, Pastor (Professor) P. O. Alokan, Pastor (Professor) S. F. Babalola, Pastor O. J. Oluwasanmi (University Chaplain), Pastor (Dr) S. M. O. Awoniyi, Pastor John Babalola, Pastor (Dr) J. A. O Magbagbeola
             </p>
           </div>
         </div>
