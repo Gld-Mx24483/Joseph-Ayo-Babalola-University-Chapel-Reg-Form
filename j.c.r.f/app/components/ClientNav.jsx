@@ -69,7 +69,7 @@ const ClientNav = () => {
         />
         <NavLink
           href="#contact"
-          text="Contact"
+          text="Form"
           onClick={(e) => {
             e.preventDefault();
             scrollToSection('contact');
@@ -101,7 +101,7 @@ const ClientNav = () => {
             />
             <NavLink
               href="#contact"
-              text="Contact"
+              text="Form"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToSection('contact');
