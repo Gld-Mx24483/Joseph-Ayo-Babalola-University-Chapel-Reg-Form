@@ -1,14 +1,16 @@
 //Personal.jsx
 import { X } from 'lucide-react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
 
-const Personal = ({ isOpen, onClose, onNext, onPrevious  }) => {
+const Personal = ({ isOpen, onClose, onNext, onPrevious }) => {
   const { control, handleSubmit } = useForm();
+  const [passportPreview, setPassportPreview] = useState(null);
 
   if (!isOpen) return null;
 
-const onSubmit = (data) => {
+  const onSubmit = (data) => {
     console.log(data);
   };
 
@@ -108,13 +110,36 @@ const onSubmit = (data) => {
             render={({ field }) => (
               <div className={personalStyles.inputGroup}>
                 <label className={personalStyles.fileInputLabel}>4. Upload your passport</label>
-                <div className={personalStyles.dropzone} onClick={() => document.getElementById('passportUpload').click()}>
-                  <p className="text-sm sm:text-base">{field.value || 'Drag & Drop or Click to Upload'}</p>
+                <div 
+                  className={personalStyles.passportContainer}
+                  onClick={() => document.getElementById('passportUpload').click()}
+                >
+                  {passportPreview ? (
+                    <img 
+                      src={passportPreview} 
+                      alt="Passport preview" 
+                      className={personalStyles.passportPreview}
+                    />
+                  ) : (
+                    <div className={personalStyles.dropzone}>
+                      <p className="text-sm sm:text-base">Drag & Drop or Click to Upload</p>
+                    </div>
+                  )}
                   <input
                     id="passportUpload"
                     type="file"
                     accept="image/*"
-                    onChange={(e) => field.onChange(e.target.files[0]?.name)}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        field.onChange(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setPassportPreview(reader.result);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
                     className={personalStyles.fileInput}
                   />
                 </div>
@@ -128,13 +153,13 @@ const onSubmit = (data) => {
             options={['Male', 'Female']}
           />
 
-        <DateInputField name="dob" label="6. Date of Birth" required />
-        <InputField name="homeTown" label="7. Home Town" required />
-        <InputField name="stateOfOrigin" label="8. State of Origin" required />
-        <InputField name="nationality" label="9. Nationality" required />
-        <InputField name="phoneNo" label="10. Phone No" type="tel" required />
-        <InputField name="whatsappNo" label="11. WhatsApp Phone No" type="tel" required />
-        <InputField name="email" label="12. Email Address" type="email" required />
+          <DateInputField name="dob" label="6. Date of Birth" required />
+          <InputField name="homeTown" label="7. Home Town" required />
+          <InputField name="stateOfOrigin" label="8. State of Origin" required />
+          <InputField name="nationality" label="9. Nationality" required />
+          <InputField name="phoneNo" label="10. Phone No" type="tel" required />
+          <InputField name="whatsappNo" label="11. WhatsApp Phone No" type="tel" required />
+          <InputField name="email" label="12. Email Address" type="email" required />
 
           <Controller
             name="address"
@@ -185,8 +210,8 @@ const onSubmit = (data) => {
           <InputField name="department" label="19. Department" required />
 
           <div className={personalStyles.navigation}>
-              <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
-              <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
+            <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
+            <button type="button" onClick={onNext} className={personalStyles.navButton}>Next</button>
           </div>
         </form>
       </div>
