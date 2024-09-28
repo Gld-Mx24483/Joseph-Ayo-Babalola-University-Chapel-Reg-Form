@@ -15,7 +15,6 @@ const Spirituality = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
   const watchLeadershipTraining = useWatch({ control, name: 'leadershipTraining' });
   const watchCommunicant = useWatch({ control, name: 'communicant' });
 
-
   if (!isOpen) return null;
 
   const onSubmit = (data) => {
@@ -196,10 +195,11 @@ const Spirituality = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
             number="28"
           />
           <InputField 
-          name="notCommunicantReason" 
-          label="If No, why?" 
-          required={watchCommunicant === 'No'}
-          number="29"   />
+            name="notCommunicantReason" 
+            label="If No, why?" 
+            required={watchCommunicant === 'No'}
+            number="29"   
+          />
           
           <RadioGroup
             name="holySpirit"
@@ -270,7 +270,7 @@ const Spirituality = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
             <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
             <button type="submit" className={personalStyles.navButton}>Next</button>
           </div>
-        </form>
+          </form>
       </div>
     </div>
   );

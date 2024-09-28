@@ -1,8 +1,53 @@
 //Review.jsx
-import { X } from 'lucide-react';
+import { AlertCircle, CheckCircle, X } from 'lucide-react';
+import { useState } from 'react';
 import { personalStyles } from './PersonalStyles';
 
+const SuccessDialog = ({ onClose }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-8 max-w-xs w-full sm:max-w-sm md:max-w-md">
+      <div className="flex items-center mb-4">
+        <CheckCircle className="text-green-500 mr-2" size={28} />
+        <h3 className="text-2xl font-extrabold text-gray-900">Success!</h3>
+      </div>
+      <p className="text-gray-700 text-lg mb-6 font-semibold">
+        Your form has been successfully submitted.
+      </p>
+      <button
+        onClick={onClose}
+        className="w-full bg-green-600 text-white text-lg font-medium py-2 px-4 rounded hover:bg-green-700 transition duration-200"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+);
+
+const ErrorDialog = ({ onClose }) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg p-8 max-w-xs w-full sm:max-w-sm md:max-w-md">
+      <div className="flex items-center mb-4">
+        <AlertCircle className="text-red-500 mr-2" size={28} />
+        <h3 className="text-2xl font-extrabold text-gray-900">Error</h3>
+      </div>
+      <p className="text-gray-700 text-lg mb-6 font-semibold">
+        An error occurred while submitting your form. Please try again.
+      </p>
+      <button
+        onClick={onClose}
+        className="w-full bg-red-600 text-white text-lg font-medium py-2 px-4 rounded hover:bg-red-700 transition duration-200"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+);
+
+
 const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+
   if (!isOpen) return null;
 
   const sections = [
@@ -18,6 +63,15 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
       .replace(/^./, (str) => str.toUpperCase());
   };
 
+  const handleSubmit = async () => {
+    try {
+      await onSubmit();
+      setShowSuccessDialog(true);
+    } catch (error) {
+      setShowErrorDialog(true);
+    }
+  };
+
   return (
     <div className={personalStyles.modalOverlay}>
       <div className={`${personalStyles.modalContent} max-w-4xl`}>
@@ -25,14 +79,16 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
           <X size={20} className="sm:w-6 sm:h-6" />
         </button>
         <div className="flex justify-between items-start mb-6">
-          <h2 className={personalStyles.mainHeading}>Review Your Answers</h2>
-          {formData.passport && (
-            <img 
-              src={URL.createObjectURL(formData.passport)} 
-              alt="Passport" 
-              className="w-32 h-40 object-cover rounded-md shadow-md"
-            />
-          )}
+          <h2 className={personalStyles.mainHeading}>Review Your Response</h2>
+          <div className="mt-4 mr-4">
+            {formData.passport && (
+              <img 
+                src={URL.createObjectURL(formData.passport)} 
+                alt="Passport" 
+                className="w-32 h-40 object-cover rounded-md shadow-md"
+              />
+            )}
+          </div>
         </div>
         
         <div className="mt-6 space-y-8">
@@ -57,11 +113,14 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
           <button onClick={onEdit} className={`${personalStyles.navButton} bg-gray-500 hover:bg-gray-600`}>
             Edit
           </button>
-          <button onClick={onSubmit} className={`${personalStyles.navButton} bg-green-500 hover:bg-green-600`}>
+          <button onClick={handleSubmit} className={`${personalStyles.navButton} bg-green-500 hover:bg-green-600`}>
             Submit
           </button>
         </div>
       </div>
+
+      {showSuccessDialog && <SuccessDialog onClose={() => { setShowSuccessDialog(false); onClose(); }} />}
+      {showErrorDialog && <ErrorDialog onClose={() => setShowErrorDialog(false)} />}
     </div>
   );
 };
