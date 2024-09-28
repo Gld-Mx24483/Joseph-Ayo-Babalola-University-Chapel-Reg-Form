@@ -1,41 +1,51 @@
 // app/components/Login.jsx
 'use client';
-
+import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import backgroundImage from '../assets/jabu-auditorium.jpg';
 import logoImage from '../assets/logo.png';
+import { loginStyles } from './LoginStyles';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username === 'Chaplaincy' && password === 'chaplaincy123') {
-      // Navigate to admin dashboard or set authentication state
       console.log('Login successful');
     } else {
       setError('Invalid credentials');
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center">
-      <div className="absolute inset-0">
+    <div className={loginStyles.container}>
+      {/* Background Image */}
+      <div className={loginStyles.backgroundImageContainer}>
         <Image
           src={backgroundImage}
           alt="JABU Background"
-          layout="fill"
-          objectFit="cover"
+          placeholder="blur"
           quality={100}
+          fill
+          style={{
+            objectFit: 'cover',
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 to-black/80"></div>
+        <div className={loginStyles.overlay}></div>
       </div>
-      
-      <div className="relative z-10 bg-white bg-opacity-10 backdrop-filter backdrop-blur-sm rounded-lg shadow-xl p-8 w-full max-w-md">
-        <div className="flex justify-center mb-8">
+
+      {/* Login Form Content */}
+      <div className={loginStyles.formContainer}>
+        <div className={loginStyles.logo}>
           <Image
             src={logoImage}
             alt="Logo"
@@ -44,45 +54,50 @@ const Login = () => {
             objectFit="contain"
           />
         </div>
-        
-        <h2 className="text-2xl font-bold text-center text-white mb-6">Admin Login</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="username" className="sr-only">Username</label>
+
+        <h2 className={loginStyles.title}>Admin Login</h2>
+
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className={loginStyles.inputContainer}>
             <div className="relative">
               <input
                 id="username"
                 name="username"
                 type="text"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className={loginStyles.input}
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">Password</label>
             <div className="relative">
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className={loginStyles.input}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <div>
+
+          {error && <p className={loginStyles.errorMessage}>{error}</p>}
+
+          <div className={loginStyles.buttonContainer}>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className={loginStyles.button}
             >
               Login
             </button>
