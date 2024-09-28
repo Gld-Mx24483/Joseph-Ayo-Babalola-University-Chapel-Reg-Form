@@ -38,6 +38,30 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
     />
   );
 
+  const DateInputField = ({ name, label, required = false }) => (
+    <Controller
+      name={name}
+      control={control}
+      rules={{ required }}
+      render={({ field }) => (
+        <div className={personalStyles.dateInputGroup}>
+          <input
+            {...field}
+            type="date"
+            id={name}
+            className={personalStyles.dateInput}
+          />
+          <label
+            htmlFor={name}
+            className={personalStyles.dateLabel}
+          >
+            {label}
+          </label>
+        </div>
+      )}
+    />
+  );
+
   const RadioGroup = ({ name, label, options, required = false }) => (
     <Controller
       name={name}
@@ -106,7 +130,7 @@ const Spirituality = ({  isOpen, onClose, onNext, onPrevious }) => {
             required
           />
           <InputField name="churchName" label="If yes, Name of church" />
-          <InputField name="churchStartDate" label="When did you start attending the church?" type="date" />
+          <DateInputField name="churchStartDate" label="When did you start attending the church?" type="date" />
           
           <RadioGroup
             name="newBirth"

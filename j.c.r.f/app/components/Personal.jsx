@@ -1,6 +1,4 @@
 //Personal.jsx
-//Personal.jsx
-
 import { X } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
@@ -31,6 +29,30 @@ const onSubmit = (data) => {
           <label
             htmlFor={name}
             className={`${personalStyles.label} ${field.value ? personalStyles.labelFocused : ''}`}
+          >
+            {label}
+          </label>
+        </div>
+      )}
+    />
+  );
+
+  const DateInputField = ({ name, label, required = false }) => (
+    <Controller
+      name={name}
+      control={control}
+      rules={{ required }}
+      render={({ field }) => (
+        <div className={personalStyles.dateInputGroup}>
+          <input
+            {...field}
+            type="date"
+            id={name}
+            className={personalStyles.dateInput}
+          />
+          <label
+            htmlFor={name}
+            className={personalStyles.dateLabel}
           >
             {label}
           </label>
@@ -106,13 +128,13 @@ const onSubmit = (data) => {
             options={['Male', 'Female']}
           />
 
-          <InputField name="dob" label="6. Date of Birth" type="date" required />
-          <InputField name="homeTown" label="7. Home Town" required />
-          <InputField name="stateOfOrigin" label="8. State of Origin" required />
-          <InputField name="nationality" label="9. Nationality" required />
-          <InputField name="phoneNo" label="10. Phone No" type="tel" required />
-          <InputField name="whatsappNo" label="11. WhatsApp Phone No" type="tel" required />
-          <InputField name="email" label="12. Email Address" type="email" required />
+        <DateInputField name="dob" label="6. Date of Birth" required />
+        <InputField name="homeTown" label="7. Home Town" required />
+        <InputField name="stateOfOrigin" label="8. State of Origin" required />
+        <InputField name="nationality" label="9. Nationality" required />
+        <InputField name="phoneNo" label="10. Phone No" type="tel" required />
+        <InputField name="whatsappNo" label="11. WhatsApp Phone No" type="tel" required />
+        <InputField name="email" label="12. Email Address" type="email" required />
 
           <Controller
             name="address"

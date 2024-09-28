@@ -1,4 +1,3 @@
-//PersonalStyles.js
 export const personalStyles = {
     modalOverlay: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto",
     modalContent: "bg-white rounded-lg shadow-xl p-4 sm:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative",
@@ -22,4 +21,8 @@ export const personalStyles = {
     navigation: "flex justify-between mt-8 sm:mt-12",
     navButton: "px-4 sm:px-6 py-2 bg-gray-200 text-black rounded hover:bg-gray-300 transition-colors text-base sm:text-lg font-medium",
     closeButton: "absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-600 hover:text-gray-800 transition-colors",
+    // New styles for date input
+    dateInputGroup: "relative mb-6 sm:mb-8 pt-5",
+    dateInput: "w-full border-b-2 border-gray-300 py-2 text-black focus:outline-none focus:border-gray-600 transition-colors peer text-base sm:text-lg",
+    dateLabel: "absolute left-0 -top-3 text-gray-600 text-xs sm:text-sm transition-all",
   };
