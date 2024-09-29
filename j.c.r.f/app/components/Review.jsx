@@ -91,12 +91,6 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
   
       console.log('Data being sent to server:', Object.fromEntries(formDataToSend));
   
-      // const response = await axios.post('http://localhost:5000/api/submit-form', formDataToSend, {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data',
-      //   },
-      // });
-  
       const response = await axios.post(`${API_URL}/api/submit-form`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
