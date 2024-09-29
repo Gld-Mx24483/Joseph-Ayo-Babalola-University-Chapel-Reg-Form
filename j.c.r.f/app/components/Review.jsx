@@ -85,18 +85,16 @@ const Review = ({ isOpen, onClose, formData, onEdit, onSubmit }) => {
         }
       });
   
-      if (formData.passport) {
-        formDataToSend.append('passport', formData.passport);
+      if (formData.passport && formData.passport instanceof File) {
+        formDataToSend.append('passport', formData.passport, formData.passport.name);
       }
-  
-      console.log('Data being sent to server:', Object.fromEntries(formDataToSend));
   
       const response = await axios.post(`${API_URL}/api/submit-form`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
+  
       console.log('Form submitted successfully:', response.data);
       setIsLoading(false);
       setShowSuccessDialog(true);
