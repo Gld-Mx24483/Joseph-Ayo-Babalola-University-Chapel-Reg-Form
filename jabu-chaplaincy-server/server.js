@@ -5,6 +5,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
+const streamifier = require('streamifier');
 
 dotenv.config();
 
@@ -124,24 +125,21 @@ app.post('/api/submit-form', upload.single('passport'), async (req, res) => {
     });
 
     if (req.file) {
-      try {
-        const uploadResult = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            { folder: 'passports' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          streamifier.createReadStream(req.file.buffer).pipe(stream);
-        });
-        
-        formData.passportUrl = uploadResult.secure_url;
-        console.log('Passport uploaded to Cloudinary:', formData.passportUrl);
-      } catch (uploadError) {
-        console.error('Error uploading to Cloudinary:', uploadError);
-        return res.status(500).json({ message: 'Error uploading passport image', error: uploadError.message });
-      }
+      const uploadPromise = new Promise((resolve, reject) => {
+        const cld_upload_stream = cloudinary.uploader.upload_stream(
+          { folder: "passports" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(cld_upload_stream);
+      });
+
+      const result = await uploadPromise;
+      console.log('Uploaded passport URL:', result.secure_url);
+      formData.passportUrl = result.secure_url;
     }
 
     const newUser = new User(formData);
@@ -153,7 +151,6 @@ app.post('/api/submit-form', upload.single('passport'), async (req, res) => {
     res.status(500).json({ message: 'Error submitting form', error: error.message });
   }
 });
-
 
 app.get('/api/users', async (req, res) => {
     try {
