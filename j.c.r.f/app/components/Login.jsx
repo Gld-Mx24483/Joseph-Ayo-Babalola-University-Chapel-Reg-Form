@@ -7,16 +7,17 @@ import backgroundImage from '../assets/jabu-auditorium.jpg';
 import logoImage from '../assets/logo.png';
 import { loginStyles } from './LoginStyles';
 
-const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+const Login = ({ onLoginSuccess }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username === 'Chaplaincy' && password === 'chaplaincy123') {
       console.log('Login successful');
+      onLoginSuccess();
     } else {
       setError('Invalid credentials');
     }
