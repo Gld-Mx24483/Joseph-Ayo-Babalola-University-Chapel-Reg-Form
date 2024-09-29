@@ -50,7 +50,7 @@ const collegesAndDepartments = {
 };
 
 const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
-  const { control, handleSubmit, watch } = useForm({
+  const { control, handleSubmit, watch, setValue } = useForm({
     defaultValues: initialData
   });
   const [passportPreview, setPassportPreview] = useState(null);
@@ -144,14 +144,20 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
     />
   );
 
-  const DepartmentDropdown = ({ control, name, label, required = false, number }) => (
+  const Dropdown = ({ name, label, options, required = false, number, onChange }) => (
     <Controller
       name={name}
       control={control}
       rules={{ required }}
       render={({ field }) => (
         <div className="mb-6 sm:mb-8">
-          <Listbox value={field.value} onChange={field.onChange}>
+          <Listbox
+            value={field.value}
+            onChange={(value) => {
+              field.onChange(value);
+              if (onChange) onChange(value);
+            }}
+          >
             {({ open }) => (
               <>
                 <Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
@@ -159,9 +165,9 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
                 </Listbox.Label>
                 <div className="relative mt-1">
                   <Listbox.Button className="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm">
-                  <span className={`block truncate font-medium ${field.value ? 'text-black' : ''}`}>
-                    {field.value || 'Select department'}
-                  </span>
+                    <span className={`block truncate font-medium ${field.value ? 'text-black' : ''}`}>
+                      {field.value || `Select ${label.toLowerCase()}`}
+                    </span>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </span>
@@ -175,19 +181,19 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
                     leaveTo="opacity-0"
                   >
                     <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                      {departments.map((department, departmentIdx) => (
+                      {options.map((option, optionIdx) => (
                         <Listbox.Option
-                          key={departmentIdx}
+                          key={optionIdx}
                           className={({ active }) =>
                             `${active ? 'text-white bg-indigo-600' : 'text-gray-900'}
                               cursor-default select-none relative py-2 pl-3 pr-9`
                           }
-                          value={department}
+                          value={option}
                         >
                           {({ selected, active }) => (
                             <>
                               <span className={`${selected ? 'font-semibold' : 'font-normal'} block truncate`}>
-                                {department}
+                                {option}
                               </span>
                               {selected && (
                                 <span
@@ -322,18 +328,21 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
           <InputField name="hostel" label="Hostel, Block & Room No" number="16" />
           <InputField name="matricNo" label="Matric No or Registration Number" number="17" />
 
-          <RadioGroup
+          <Dropdown
             name="college"
             label="College"
             options={Object.keys(collegesAndDepartments)}
             required
             number="18"
+            onChange={(value) => {
+              setValue('department', '');
+            }}
           />
 
-          <DepartmentDropdown
-            control={control}
+          <Dropdown
             name="department"
             label="Department"
+            options={departments}
             required
             number="19"
           />
