@@ -1,21 +1,3 @@
-// // app/admin/page.js
-// import Footer from '../components/Footer';
-// import Login from '../components/Login';
-// import Nav from '../components/Nav';
-
-// export default function AdminLoginPage() {
-//   return (
-//     <main className="min-h-screen flex flex-col">
-//       <Nav />
-//       <div className="flex-grow flex items-center justify-center">
-//         <Login />
-//       </div>
-//       <Footer />
-//     </main>
-//   );
-// }
-
-
 // app/admin/page.js
 'use client';
 import { useState } from 'react';
@@ -31,14 +13,20 @@ export default function AdminPage() {
     setIsLoggedIn(true);
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
   return (
     <main className="min-h-screen flex flex-col">
       <Nav />
-      <div className="flex-grow flex items-center justify-center">
+      <div className="flex-grow">
         {isLoggedIn ? (
-          <Dashboard />
+          <Dashboard onLogout={handleLogout} />
         ) : (
-          <Login onLoginSuccess={handleLoginSuccess} />
+          <div className="flex items-center justify-center h-full">
+            <Login onLoginSuccess={handleLoginSuccess} />
+          </div>
         )}
       </div>
       <Footer />

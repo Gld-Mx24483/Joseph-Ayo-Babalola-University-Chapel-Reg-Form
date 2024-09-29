@@ -1,128 +1,116 @@
+// Dashboard.jsx
+import { Button, CircularProgress } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
+import API_URL from './api-config';
 
-const Dashboard = () => {
+const Dashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
-  const [searchName, setSearchName] = useState('');
-  const [searchRole, setSearchRole] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch users from API
-    // For now, we'll use dummy data
-    setUsers([
-      {
-        firstName: 'ADEDAPO',
-        surname: 'TOKI',
-        middleName: 'ISRAEL',
-        sex: 'Male',
-        dob: '1990-01-01',
-        homeTown: 'Lagos',
-        stateOfOrigin: 'Lagos',
-        nationality: 'Nigerian',
-        phoneNo: '08106775113',
-        whatsappNo: '08106775113',
-        email: 'israeltoki7@gmail.com',
-        address: 'Block 4 Flat 3, Abesan Housing Estate, Ipaja, Lagos, Nigeria',
-        hobbies: ['Reading', 'Coding'],
-        level: 'Senior',
-        hostel: 'Block A',
-        matricNo: '12345',
-        college: 'Engineering',
-        department: 'Computer Science',
-        passportUrl: 'https://example.com/passport.jpg',
-      },
-      // Add more dummy users here
-    ]);
+    fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(user => 
-    user.firstName.toLowerCase().includes(searchName.toLowerCase()) ||
-    user.surname.toLowerCase().includes(searchName.toLowerCase())
-  );
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/users`);
+      const data = await response.json();
+      setUsers(data.map((user, index) => ({ ...user, id: index + 1 })));
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const columns = [
+    { field: 'id', headerName: 'S/N', width: 70 },
+    { field: 'firstName', headerName: 'First Name', width: 130 },
+    { field: 'surname', headerName: 'Surname', width: 130 },
+    { field: 'middleName', headerName: 'Middle Name', width: 130 },
+    { field: 'sex', headerName: 'Sex', width: 90 },
+    { field: 'dob', headerName: 'Date of Birth', width: 130 },
+    { field: 'homeTown', headerName: 'Home Town', width: 130 },
+    { field: 'stateOfOrigin', headerName: 'State of Origin', width: 130 },
+    { field: 'nationality', headerName: 'Nationality', width: 130 },
+    { field: 'phoneNo', headerName: 'Phone Number', width: 130 },
+    { field: 'whatsappNo', headerName: 'WhatsApp Number', width: 150 },
+    { field: 'email', headerName: 'Email', width: 200 },
+    { field: 'address', headerName: 'Address', width: 200 },
+    { field: 'hobbies', headerName: 'Hobbies', width: 200, valueGetter: (params) => params.row.hobbies.join(', ') },
+    { field: 'level', headerName: 'Level', width: 100 },
+    { field: 'hostel', headerName: 'Hostel', width: 100 },
+    { field: 'matricNo', headerName: 'Matric No', width: 130 },
+    { field: 'college', headerName: 'College', width: 150 },
+    { field: 'department', headerName: 'Department', width: 150 },
+    { field: 'passportUrl', headerName: 'Passport URL', width: 200 },
+    { field: 'attendChurch', headerName: 'Attends Church', width: 130, valueGetter: (params) => params.row.attendChurch ? 'Yes' : 'No' },
+    { field: 'churchName', headerName: 'Church Name', width: 150 },
+    { field: 'churchStartDate', headerName: 'Church Start Date', width: 150 },
+    { field: 'newBirth', headerName: 'New Birth', width: 100, valueGetter: (params) => params.row.newBirth ? 'Yes' : 'No' },
+    { field: 'newBirthDate', headerName: 'New Birth Date', width: 130 },
+    { field: 'salvationExperience', headerName: 'Salvation Experience', width: 200 },
+    { field: 'waterBaptism', headerName: 'Water Baptism', width: 130, valueGetter: (params) => params.row.waterBaptism ? 'Yes' : 'No' },
+    { field: 'waterBaptismDate', headerName: 'Water Baptism Date', width: 150 },
+    { field: 'communicant', headerName: 'Communicant', width: 120, valueGetter: (params) => params.row.communicant ? 'Yes' : 'No' },
+    { field: 'notCommunicantReason', headerName: 'Not Communicant Reason', width: 200 },
+    { field: 'holySpirit', headerName: 'Holy Spirit', width: 120, valueGetter: (params) => params.row.holySpirit ? 'Yes' : 'No' },
+    { field: 'notHolySpiritReason', headerName: 'Not Holy Spirit Reason', width: 200 },
+    { field: 'spiritualGifts', headerName: 'Spiritual Gifts', width: 200, valueGetter: (params) => params.row.spiritualGifts.join(', ') },
+    { field: 'churchDiscipline', headerName: 'Church Discipline', width: 150, valueGetter: (params) => params.row.churchDiscipline ? 'Yes' : 'No' },
+    { field: 'disciplineReason', headerName: 'Discipline Reason', width: 200 },
+    { field: 'leadershipTraining', headerName: 'Leadership Training', width: 170, valueGetter: (params) => params.row.leadershipTraining ? 'Yes' : 'No' },
+    { field: 'leadershipTrainingDetails', headerName: 'Leadership Training Details', width: 200 },
+    { field: 'pastorName', headerName: 'Pastor Name', width: 150 },
+    { field: 'pastorPhone', headerName: 'Pastor Phone', width: 130 },
+    { field: 'lifeVision', headerName: 'Life Vision', width: 200 },
+    { field: 'obeyInstructions', headerName: 'Obey Instructions', width: 150, valueGetter: (params) => params.row.obeyInstructions ? 'Yes' : 'No' },
+    { field: 'contributeToChapel', headerName: 'Contribute to Chapel', width: 170, valueGetter: (params) => params.row.contributeToChapel ? 'Yes' : 'No' },
+    { field: 'sponsorName', headerName: 'Sponsor Name', width: 150 },
+    { field: 'familyType', headerName: 'Family Type', width: 130 },
+    { field: 'sponsorOccupation', headerName: 'Sponsor Occupation', width: 170 },
+    { field: 'sponsorPhone', headerName: 'Sponsor Phone', width: 130 },
+    { field: 'parentsLivingTogether', headerName: 'Parents Living Together', width: 200, valueGetter: (params) => params.row.parentsLivingTogether ? 'Yes' : 'No' },
+    { field: 'parentsNotLivingTogetherReason', headerName: 'Parents Not Living Together Reason', width: 250 },
+    { field: 'bothParentsAlive', headerName: 'Both Parents Alive', width: 150, valueGetter: (params) => params.row.bothParentsAlive ? 'Yes' : 'No' },
+    { field: 'whichParentAlive', headerName: 'Which Parent Alive', width: 150 },
+    { field: 'hasPhysicalDefect', headerName: 'Has Physical Defect', width: 170, valueGetter: (params) => params.row.hasPhysicalDefect ? 'Yes' : 'No' },
+    { field: 'physicalDefectType', headerName: 'Physical Defect Type', width: 170 },
+    { field: 'oftenIll', headerName: 'Often Ill', width: 100, valueGetter: (params) => params.row.oftenIll ? 'Yes' : 'No' },
+    { field: 'specialDietOrTreatment', headerName: 'Special Diet or Treatment', width: 200 },
+  ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+    <div className="p-6 max-w-full mx-auto mt-16">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <Button
+          onClick={onLogout}
+          variant="contained"
+          color="secondary"
+        >
+          Log Out
+        </Button>
+      </div>
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-6">User Management</h2>
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search by Name"
-            value={searchName}
-            onChange={(e) => setSearchName(e.target.value)}
-            className="flex-1 p-2 border border-gray-300 rounded-md"
-          />
-          <input
-            type="text"
-            placeholder="Search by Role"
-            value={searchRole}
-            onChange={(e) => setSearchRole(e.target.value)}
-            className="flex-1 p-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div className="flex flex-wrap gap-4 mb-6">
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-            Incoming Member Requests
-          </button>
-          <button className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
-            Members in the Team
-          </button>
-          <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors">
-            Volunteers
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2 text-left border-b">First Name</th>
-                <th className="px-4 py-2 text-left border-b">Surname</th>
-                <th className="px-4 py-2 text-left border-b">Middle Name</th>
-                <th className="px-4 py-2 text-left border-b">Sex</th>
-                <th className="px-4 py-2 text-left border-b">Date of Birth</th>
-                <th className="px-4 py-2 text-left border-b">Home Town</th>
-                <th className="px-4 py-2 text-left border-b">State of Origin</th>
-                <th className="px-4 py-2 text-left border-b">Nationality</th>
-                <th className="px-4 py-2 text-left border-b">Phone Number</th>
-                <th className="px-4 py-2 text-left border-b">WhatsApp Number</th>
-                <th className="px-4 py-2 text-left border-b">Email</th>
-                <th className="px-4 py-2 text-left border-b">Address</th>
-                <th className="px-4 py-2 text-left border-b">Hobbies</th>
-                <th className="px-4 py-2 text-left border-b">Level</th>
-                <th className="px-4 py-2 text-left border-b">Hostel</th>
-                <th className="px-4 py-2 text-left border-b">Matric No</th>
-                <th className="px-4 py-2 text-left border-b">College</th>
-                <th className="px-4 py-2 text-left border-b">Department</th>
-                <th className="px-4 py-2 text-left border-b">Passport URL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                  <td className="px-4 py-2 border-b">{user.firstName}</td>
-                  <td className="px-4 py-2 border-b">{user.surname}</td>
-                  <td className="px-4 py-2 border-b">{user.middleName}</td>
-                  <td className="px-4 py-2 border-b">{user.sex}</td>
-                  <td className="px-4 py-2 border-b">{user.dob}</td>
-                  <td className="px-4 py-2 border-b">{user.homeTown}</td>
-                  <td className="px-4 py-2 border-b">{user.stateOfOrigin}</td>
-                  <td className="px-4 py-2 border-b">{user.nationality}</td>
-                  <td className="px-4 py-2 border-b">{user.phoneNo}</td>
-                  <td className="px-4 py-2 border-b">{user.whatsappNo}</td>
-                  <td className="px-4 py-2 border-b">{user.email}</td>
-                  <td className="px-4 py-2 border-b">{user.address}</td>
-                  <td className="px-4 py-2 border-b">{user.hobbies.join(', ')}</td>
-                  <td className="px-4 py-2 border-b">{user.level}</td>
-                  <td className="px-4 py-2 border-b">{user.hostel}</td>
-                  <td className="px-4 py-2 border-b">{user.matricNo}</td>
-                  <td className="px-4 py-2 border-b">{user.college}</td>
-                  <td className="px-4 py-2 border-b">{user.department}</td>
-                  <td className="px-4 py-2 border-b">{user.passportUrl}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <CircularProgress />
+          </div>
+        ) : (
+          <div style={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={users}
+              columns={columns}
+              pageSize={10}
+              rowsPerPageOptions={[10, 25, 50]}
+              checkboxSelection
+              disableSelectionOnClick
+            />
+          </div>
+        )}
       </div>
     </div>
   );
