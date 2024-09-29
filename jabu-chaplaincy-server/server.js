@@ -359,9 +359,9 @@ app.post('/api/submit-form', upload.single('passport'), async (req, res) => {
   }
 });
 
-// Test route
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Server is running' });
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to JABU Chaplaincy API' });
 });
 
 // Export the Express app
