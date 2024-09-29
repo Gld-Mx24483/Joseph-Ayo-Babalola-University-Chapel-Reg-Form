@@ -1,14 +1,64 @@
 //Personal.jsx
+import { Listbox, Transition } from '@headlessui/react';
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
 
+const collegesAndDepartments = {
+  'Agriculture and Natural Sciences': [
+    'Agricultural Economics',
+    'Animal Science',
+    'Biochemistry',
+    'Computer Science',
+    'Crop Science',
+    'Food Science and Technology',
+    'Hotel Management and Tourism',
+    'Industrial Chemistry',
+    'Microbiology',
+    'Physics Electronics'
+  ],
+  'Environmental Sciences': [
+    'Architecture',
+    'Building',
+    'Estate Management',
+    'Quantity Survey'
+  ],
+  'Health Sciences': [
+    'Medical Laboratory Science',
+    'Nursing'
+  ],
+  'Humanities and Social Sciences': [
+    'Economics',
+    'English',
+    'History and International Studies',
+    'International Relations',
+    'Mass Communication',
+    'Political Science',
+    'Public Administration',
+    'Philosophy & Religious Studies'
+  ],
+  'Law': ['Law'],
+  'Management Sciences': [
+    'Accounting',
+    'Business Administration',
+    'Entrepreneurship',
+    'Human Resource Management and Industrial Relations',
+    'Insurance'
+  ]
+};
+
 const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit, watch } = useForm({
     defaultValues: initialData
   });
   const [passportPreview, setPassportPreview] = useState(null);
+  const selectedCollege = watch('college');
+  
+  const departments = useMemo(() => {
+    return selectedCollege ? collegesAndDepartments[selectedCollege] || [] : [];
+  }, [selectedCollege]);
 
   if (!isOpen) return null;
 
@@ -89,6 +139,74 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
               </label>
             ))}
           </div>
+        </div>
+      )}
+    />
+  );
+
+  const DepartmentDropdown = ({ control, name, label, required = false, number }) => (
+    <Controller
+      name={name}
+      control={control}
+      rules={{ required }}
+      render={({ field }) => (
+        <div className="mb-6 sm:mb-8">
+          <Listbox value={field.value} onChange={field.onChange}>
+            {({ open }) => (
+              <>
+                <Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
+                  {number}. {label} {required && <span className="text-red-500">*</span>}
+                </Listbox.Label>
+                <div className="relative mt-1">
+                  <Listbox.Button className="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm">
+                  <span className={`block truncate font-medium ${field.value ? 'text-black' : ''}`}>
+                    {field.value || 'Select department'}
+                  </span>
+                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </span>
+                  </Listbox.Button>
+
+                  <Transition
+                    show={open}
+                    as={React.Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      {departments.map((department, departmentIdx) => (
+                        <Listbox.Option
+                          key={departmentIdx}
+                          className={({ active }) =>
+                            `${active ? 'text-white bg-indigo-600' : 'text-gray-900'}
+                              cursor-default select-none relative py-2 pl-3 pr-9`
+                          }
+                          value={department}
+                        >
+                          {({ selected, active }) => (
+                            <>
+                              <span className={`${selected ? 'font-semibold' : 'font-normal'} block truncate`}>
+                                {department}
+                              </span>
+                              {selected && (
+                                <span
+                                  className={`${active ? 'text-white' : 'text-indigo-600'}
+                                    absolute inset-y-0 right-0 flex items-center pr-4`}
+                                >
+                                  <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </>
+            )}
+          </Listbox>
         </div>
       )}
     />
@@ -207,23 +325,22 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
           <RadioGroup
             name="college"
             label="College"
-            options={[
-              'Agriculture and Natural Sciences',
-              'Health Sciences',
-              'Law',
-              'Management Sciences',
-              'Humanities and Social Sciences',
-              'Environmental Sciences'
-            ]}
+            options={Object.keys(collegesAndDepartments)}
             required
             number="18"
           />
 
-          <InputField name="department" label="Department" required number="19" />
+          <DepartmentDropdown
+            control={control}
+            name="department"
+            label="Department"
+            required
+            number="19"
+          />
 
           <div className={personalStyles.navigation}>
-          <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
-          <button type="submit" className={personalStyles.navButton}>Next</button>
+            <button type="button" onClick={onPrevious} className={personalStyles.navButton}>Previous</button>
+            <button type="submit" className={personalStyles.navButton}>Next</button>
           </div>
         </form>
       </div>
