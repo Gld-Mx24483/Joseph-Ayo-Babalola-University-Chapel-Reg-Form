@@ -114,8 +114,8 @@ const Dashboard = ({ onLogout }) => {
           Log Out
         </Button>
       </div>
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-6">User Management</h2>
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <CircularProgress />
