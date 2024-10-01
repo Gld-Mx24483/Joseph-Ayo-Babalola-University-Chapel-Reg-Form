@@ -1,5 +1,4 @@
-// Dashboard.jsx
-import { Button } from '@mui/material';
+import { Button, Dialog } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
@@ -11,6 +10,7 @@ const Dashboard = ({ onLogout }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -24,7 +24,7 @@ const Dashboard = ({ onLogout }) => {
       
       const formattedUsers = data.users.map((user, index) => ({
         ...user,
-        id: user._id,
+        id: (page * pageSize) + index + 1,
         attendChurch: user.attendChurch ? "Yes" : "No",
         newBirth: user.newBirth ? "Yes" : "No",
         waterBaptism: user.waterBaptism ? "Yes" : "No",
@@ -63,8 +63,35 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const handleCloseImage = () => {
+    setSelectedImage(null);
+  };
+
   const columns = [
     { field: 'id', headerName: 'S/N', width: 70 },
+    { 
+      field: 'passportUrl', 
+      headerName: 'Passport', 
+      width: 100,
+      renderCell: (params) => (
+        <img
+          src={params.value}
+          alt="Passport"
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            cursor: 'pointer',
+          }}
+          onClick={() => handleImageClick(params.value)}
+        />
+      ),
+    },
     { field: 'firstName', headerName: 'First Name', width: 130 },
     { field: 'surname', headerName: 'Surname', width: 130 },
     { field: 'middleName', headerName: 'Middle Name', width: 130 },
@@ -83,7 +110,6 @@ const Dashboard = ({ onLogout }) => {
     { field: 'matricNo', headerName: 'Matric No', width: 130 },
     { field: 'college', headerName: 'College', width: 150 },
     { field: 'department', headerName: 'Department', width: 150 },
-    { field: 'passportUrl', headerName: 'Passport URL', width: 200 },
     { field: 'attendChurch', headerName: 'Attends Church', width: 130 },
     { field: 'churchName', headerName: 'Church Name', width: 150 },
     { field: 'churchStartDate', headerName: 'Church Start Date', width: 150 },
@@ -127,7 +153,7 @@ const Dashboard = ({ onLogout }) => {
           variant="contained"
           color="primary"
           size="small"
-          onClick={() => handleDownloadPDF(params.row.id)}
+          onClick={() => handleDownloadPDF(params.row._id)}
         >
           Download PDF
         </Button>
@@ -167,10 +193,14 @@ const Dashboard = ({ onLogout }) => {
               onPageChange={(newPage) => setPage(newPage)}
               onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
               loading={loading}
+              rowHeight={80}
             />
           </div>
         )}
       </div>
+      <Dialog open={!!selectedImage} onClose={handleCloseImage} maxWidth="md" fullWidth>
+        <img src={selectedImage} alt="Full-size passport" style={{ width: '100%', height: 'auto' }} />
+      </Dialog>
     </div>
   );
 };
