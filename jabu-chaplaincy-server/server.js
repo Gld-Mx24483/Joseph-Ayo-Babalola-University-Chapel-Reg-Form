@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const axios = require('axios');
 
 dotenv.config();
 
@@ -158,9 +157,33 @@ app.post('/api/submit-form', async (req, res) => {
   }
 });
 
-app.get('/api/download-pdf/:userId', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const users = await User.find({}, { pdfFile: 0 }) // Exclude pdfFile field
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await User.countDocuments();
+
+    res.json({
+      users,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users', error: error.message });
+  }
+});
+
+app.get('/api/user-pdf/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId, { pdfFile: 1, pdfFileName: 1 });
     if (!user || !user.pdfFile) {
       return res.status(404).json({ error: 'PDF not found' });
     }
@@ -169,18 +192,8 @@ app.get('/api/download-pdf/:userId', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${user.pdfFileName}"`);
     res.send(user.pdfFile);
   } catch (error) {
-    console.error('Error downloading PDF:', error);
-    res.status(500).json({ error: 'Error downloading PDF', details: error.message });
-  }
-});
-
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    console.error('Error fetching PDF:', error);
+    res.status(500).json({ error: 'Error fetching PDF', details: error.message });
   }
 });
 

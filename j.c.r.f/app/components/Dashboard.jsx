@@ -8,22 +8,23 @@ import API_URL from './api-config';
 const Dashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, pageSize]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/users`);
+      const response = await fetch(`${API_URL}/api/users?page=${page + 1}&limit=${pageSize}`);
       const data = await response.json();
-      console.log('Raw data from API:', data);
       
-      const validUsers = data.filter(user => user != null);
-      const formattedUsers = validUsers.map((user, index) => ({
+      const formattedUsers = data.users.map((user, index) => ({
         ...user,
-        id: index + 1,
+        id: user._id,
         attendChurch: user.attendChurch ? "Yes" : "No",
         newBirth: user.newBirth ? "Yes" : "No",
         waterBaptism: user.waterBaptism ? "Yes" : "No",
@@ -36,6 +37,7 @@ const Dashboard = ({ onLogout }) => {
       }));
       
       setUsers(formattedUsers);
+      setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
@@ -43,7 +45,23 @@ const Dashboard = ({ onLogout }) => {
       setLoading(false);
     }
   };
-  
+
+  const handleDownloadPDF = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/user-pdf/${userId}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'user_registration.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    }
+  };
 
   const columns = [
     { field: 'id', headerName: 'S/N', width: 70 },
@@ -100,6 +118,21 @@ const Dashboard = ({ onLogout }) => {
     { field: 'physicalDefectType', headerName: 'Physical Defect Type', width: 170 },
     { field: 'oftenIll', headerName: 'Often Ill', width: 100 },
     { field: 'specialDietOrTreatment', headerName: 'Special Diet or Treatment', width: 200 },
+    {
+      field: 'downloadPDF',
+      headerName: 'Download PDF',
+      width: 150,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => handleDownloadPDF(params.row.id)}
+        >
+          Download PDF
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -114,8 +147,8 @@ const Dashboard = ({ onLogout }) => {
           Log Out
         </Button>
       </div>
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <CircularProgress />
@@ -125,10 +158,15 @@ const Dashboard = ({ onLogout }) => {
             <DataGrid
               rows={users}
               columns={columns}
-              pageSize={10}
+              pageSize={pageSize}
               rowsPerPageOptions={[10, 25, 50]}
               checkboxSelection
               disableSelectionOnClick
+              paginationMode="server"
+              rowCount={totalPages * pageSize}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+              loading={loading}
             />
           </div>
         )}
