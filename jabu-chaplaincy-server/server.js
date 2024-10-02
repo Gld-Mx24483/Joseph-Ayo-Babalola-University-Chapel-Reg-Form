@@ -453,23 +453,23 @@ app.get('/api/users', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const pageSize = parseInt(req.query.pageSize) || 25;
+    const skip = (page - 1) * pageSize;
 
-    const users = await User.find({}, { pdfFile: 0 }) // Exclude pdfFile field
+    // Fetch users for current page
+    const users = await User.find()
       .skip(skip)
-      .limit(limit)
+      .limit(pageSize)
       .lean();
 
-    const totalRows = await User.countDocuments();
-
-    console.log(`Total number of users in the database: ${totalRows}`); // Add this line to print the total number of users
+    // Get total count of documents
+    const totalCount = await User.countDocuments();
 
     res.json({
       users,
-      totalRows,
-      totalPages: Math.ceil(totalRows / limit),
-      currentPage: page
+      totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / pageSize)
     });
   } catch (error) {
     console.error('Error fetching users:', error);
