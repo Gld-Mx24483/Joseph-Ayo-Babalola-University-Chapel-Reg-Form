@@ -1,5 +1,13 @@
-import { Button, Dialog } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
+//Dashboard.jsx
+// import { Button, Dialog } from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle
+} from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import API_URL from './api-config';
@@ -11,6 +19,39 @@ const Dashboard = ({ onLogout }) => {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  const handleFileSelect = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
+
+  const handleUploadTemplate = async () => {
+    if (!selectedFile) return;
+
+    setUploadLoading(true);
+    const formData = new FormData();
+    formData.append('template', selectedFile);
+
+    try {
+      const response = await fetch(`${API_URL}/api/upload-template`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      alert('Template uploaded successfully');
+      setUploadDialogOpen(false);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error uploading template:', error);
+      alert('Error uploading template');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -163,8 +204,17 @@ const Dashboard = ({ onLogout }) => {
 
   return (
     <div className="p-6 max-w-full mx-auto mt-16">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div>
+        <Button
+          onClick={() => setUploadDialogOpen(true)}
+          variant="contained"
+          color="primary"
+          className="mr-4"
+        >
+          Upload Template
+        </Button>
         <Button
           onClick={onLogout}
           variant="contained"
@@ -173,6 +223,7 @@ const Dashboard = ({ onLogout }) => {
           Log Out
         </Button>
       </div>
+    </div>
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
         {loading ? (
@@ -200,6 +251,26 @@ const Dashboard = ({ onLogout }) => {
       </div>
       <Dialog open={!!selectedImage} onClose={handleCloseImage} maxWidth="md" fullWidth>
         <img src={selectedImage} alt="Full-size passport" style={{ width: '100%', height: 'auto' }} />
+      </Dialog>
+      <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)}>
+        <DialogTitle>Upload Document Template</DialogTitle>
+        <DialogContent>
+          <input
+            type="file"
+            accept=".docx"
+            onChange={handleFileSelect}
+            className="mt-4"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUploadDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleUploadTemplate} 
+            disabled={!selectedFile || uploadLoading}
+          >
+            {uploadLoading ? 'Uploading...' : 'Upload'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

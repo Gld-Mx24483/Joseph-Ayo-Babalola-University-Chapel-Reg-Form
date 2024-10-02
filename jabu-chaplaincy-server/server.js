@@ -3,6 +3,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const multer = require('multer');
+const mammoth = require('mammoth');
+const pdf = require('html-pdf');
 
 dotenv.config();
 
@@ -19,7 +22,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
 
 mongoose.connect(process.env.MONGODB_URI, {
   dbName: 'JABU_CHAPEL'
@@ -41,6 +44,215 @@ function formatDate(date) {
     ? d.toISOString().split('T')[0] 
     : null;
 }
+
+const templateSchema = new mongoose.Schema({
+  content: { type: Buffer, required: true },
+  fileName: { type: String, required: true },
+  uploadDate: { type: Date, default: Date.now },
+  isActive: { type: Boolean, default: true }
+});
+
+const Template = mongoose.model('Template', templateSchema);
+
+// Multer setup for file upload
+const upload = multer({
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// New endpoint to upload document template
+app.post('/api/upload-template', upload.single('template'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Deactivate all existing templates
+    await Template.updateMany({}, { isActive: false });
+
+    // Create new template
+    const newTemplate = new Template({
+      content: req.file.buffer,
+      fileName: req.file.originalname,
+      isActive: true
+    });
+
+    await newTemplate.save();
+    res.status(201).json({ message: 'Template uploaded successfully' });
+  } catch (error) {
+    console.error('Error uploading template:', error);
+    res.status(500).json({ message: 'Error uploading template' });
+  }
+});
+
+// Add the convertHtmlToPdf function
+function convertHtmlToPdf(html) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      format: 'A4',
+      orientation: 'portrait',
+      border: {
+        top: '20mm',
+        right: '20mm',
+        bottom: '20mm',
+        left: '20mm'
+      }
+    };
+
+    pdf.create(html, options).toBuffer((err, buffer) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(buffer);
+      }
+    });
+  });
+}
+
+app.post('/api/generate-pdf', async (req, res) => {
+  try {
+    const formData = req.body;
+
+    // Create the HTML content
+    const htmlContent = `
+  <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.4;
+        color: #333;
+      }
+      .container {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+      }
+       .header {
+        text-align: left;
+        padding-bottom: 20px;
+      }
+       h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        line-height: 1.2;
+      }
+      .header-line {
+        border-bottom: 2px solid #333;
+        margin-bottom: 20px;
+      }
+      .timestamp {
+        color: red;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      .content {
+        margin-bottom: 20px;
+      }
+      .details span {
+        font-weight: bold;
+      }
+      .image-container {
+        float: right;
+        width: 120px;
+        height: 150px;
+        border: 1px solid #333;
+        margin-left: 20px;
+        margin-right: 30px;
+      }
+      .passport-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .letter-body {
+        clear: both;
+        margin-top: 60px;
+      }
+      .signature-section {
+        margin-top: 100px;
+      }
+      .signature-line {
+        display: inline-block;
+        width: 180px;
+        border-bottom: 1px solid #333;
+      }
+      .signature {
+        display: inline-block;
+        width: 45%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>JABU CHAPLAINCY UNIT<br>REGISTRATION VERIFICATION<br>DOCUMENT</h1>
+        <div class="header-line"></div>
+      </div>
+      <div class="timestamp">
+        <script>
+          var now = new Date();
+          var options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+          document.write(now.toLocaleDateString('en-US', options).replace(/,/g, ''));
+        </script>
+      </div>
+      <div class="content">
+        <div class="image-container">
+          <img class="passport-img" src="${formData.passportUrl}" alt="Passport Photo">
+        </div>
+        <div class="details">
+          <p>Dear <span>${formData.firstName} ${formData.surname}</span>,</p>
+          <p><span>${formData.department}</span></p>
+          <p><span>${formData.level} Level</span></p>
+          <p><span>${formData.phoneNo}</span></p>
+          <p><span>${formData.sex}</span></p>
+        </div>
+      </div>
+      <div class="letter-body">
+        <p>
+          You've completed your Chaplaincy Clearance form successfully. You are now authorized to meet with the Chaplain to present this slip for his signature.
+        </p>
+        <p>Remain Blessed,</p>
+      </div>
+      <div class="signature-section">
+        <div class="signature">
+          <div class="signature-line"></div>
+          <p>Pastor Oluwasanmi J.O.</p>
+        </div>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="signature">
+          <div class="signature-line"></div>
+          <p>${formData.firstName} ${formData.surname}</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+    `;
+
+    // Convert the HTML to PDF
+    const pdfBuffer = await convertHtmlToPdf(htmlContent);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="chaplaincy_form.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ message: 'Error generating PDF', error: error.message });
+  }
+});
+
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, default: 'N/A' },
@@ -108,9 +320,144 @@ app.options('*', cors());
 
 app.post('/api/submit-form', async (req, res) => {
   try {
-    const { pdfData, ...formData } = req.body;
+    const formData = req.body;
     console.log('Received form data:', formData);
-    
+
+    // Generate PDF using the existing /api/generate-pdf logic
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.4;
+            color: #333;
+          }
+          .container {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+          }
+          .header {
+            text-align: left;
+            padding-bottom: 20px;
+          }
+          h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.2;
+          }
+          .header-line {
+            border-bottom: 2px solid #333;
+            margin-bottom: 20px;
+          }
+          .timestamp {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
+          .content {
+            margin-bottom: 20px;
+          }
+          .details span {
+            font-weight: bold;
+          }
+          .image-container {
+            float: right;
+            width: 120px;
+            height: 150px;
+            border: 1px solid #333;
+            margin-left: 20px;
+            margin-right: 30px;
+          }
+          .passport-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          .letter-body {
+            clear: both;
+            margin-top: 60px;
+          }
+          .signature-section {
+            margin-top: 100px;
+          }
+          .signature-line {
+            display: inline-block;
+            width: 180px;
+            border-bottom: 1px solid #333;
+          }
+          .signature {
+            display: inline-block;
+            width: 45%;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>JABU CHAPLAINCY UNIT<br>REGISTRATION VERIFICATION<br>DOCUMENT</h1>
+            <div class="header-line"></div>
+          </div>
+          <div class="timestamp">
+            ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit', 
+              second: '2-digit', 
+              hour12: true 
+            })}
+          </div>
+          <div class="content">
+            <div class="image-container">
+              <img class="passport-img" src="${formData.passportUrl}" alt="Passport Photo">
+            </div>
+            <div class="details">
+              <p>Dear <span>${formData.firstName} ${formData.surname}</span>,</p>
+              <p><span>${formData.department}</span></p>
+              <p><span>${formData.level} Level</span></p>
+              <p><span>${formData.phoneNo}</span></p>
+              <p><span>${formData.sex}</span></p>
+            </div>
+          </div>
+          <div class="letter-body">
+            <p>
+              You've completed your Chaplaincy Clearance form successfully. You are now authorized to meet with the Chaplain to present this slip for his signature.
+            </p>
+            <p>Remain Blessed,</p>
+          </div>
+          <div class="signature-section">
+            <div class="signature">
+              <div class="signature-line"></div>
+              <p>Pastor Oluwasanmi J.O.</p>
+            </div>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <div class="signature">
+              <div class="signature-line"></div>
+              <p>${formData.firstName} ${formData.surname}</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+    `;
+
+    // Generate PDF
+    const pdfBuffer = await convertHtmlToPdf(htmlContent);
+
+    // Convert boolean fields
     const booleanFields = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
     booleanFields.forEach(field => {
       if (field in formData) {
@@ -118,17 +465,20 @@ app.post('/api/submit-form', async (req, res) => {
       }
     });
 
+    // Format date fields
     const dateFields = ['dob', 'churchStartDate', 'newBirthDate', 'waterBaptismDate'];
     dateFields.forEach(field => {
       formData[field] = formatDate(formData[field]);
     });
 
+    // Handle undefined or empty fields
     Object.keys(formData).forEach(key => {
       if (formData[key] === undefined || formData[key] === 'undefined' || formData[key] === null || formData[key] === '') {
         formData[key] = 'N/A';
       }
     });
 
+    // Ensure required fields
     const requiredFields = ['firstName', 'surname', 'sex', 'dob', 'homeTown', 'stateOfOrigin', 'nationality', 'phoneNo', 'email', 'address', 'level', 'matricNo', 'college', 'department'];
     requiredFields.forEach(field => {
       if (!formData[field]) {
@@ -136,9 +486,7 @@ app.post('/api/submit-form', async (req, res) => {
       }
     });
 
-    // Convert base64 PDF data to Buffer
-    const pdfBuffer = Buffer.from(pdfData.split(',')[1], 'base64');
-
+    // Create new user with PDF
     const newUser = new User({
       ...formData,
       pdfFile: pdfBuffer,
@@ -154,6 +502,61 @@ app.post('/api/submit-form', async (req, res) => {
       error: error.message,
       stack: error.stack
     });
+  }
+});
+
+app.post('/api/generate-html', async (req, res) => {
+  try {
+    const formData = req.body;
+
+    // Get the active template
+    const template = await Template.findOne({ isActive: true });
+    if (!template) {
+      throw new Error('No active template found');
+    }
+
+    // Convert the Word document to HTML
+    const result = await mammoth.convertToHtml({ buffer: template.content });
+    let htmlContent = result.value;
+
+    // Handle passport image and form variables replacements
+    if (formData.passportUrl) {
+      const imgTag = `<img src="${formData.passportUrl}" alt="Passport Photo" style="max-width: 200px; height: auto;">`;
+      htmlContent = htmlContent.replace(/{{passportUrl}}/g, imgTag);
+    }
+
+    Object.keys(formData).forEach(key => {
+      if (key !== 'passportUrl') {  // Skip passportUrl as we've already handled it
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        htmlContent = htmlContent.replace(regex, formData[key] || '');
+      }
+    });
+
+    // Return the HTML content as the response
+    res.send(htmlContent);
+  } catch (error) {
+    console.error('Error generating HTML:', error);
+    res.status(500).json({ message: 'Error generating HTML', error: error.message });
+  }
+});
+
+
+app.get('/api/test-pdf', async (req, res) => {
+  try {
+    const testHtml = `
+      <h1>Test PDF Generation</h1>
+      <p>This is a test PDF generated from HTML.</p>
+      <p>Current time: ${new Date().toLocaleString()}</p>
+    `;
+    
+    const pdfBuffer = await convertHtmlToPdf(testHtml);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="test.pdf"');
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating test PDF:', error);
+    res.status(500).json({ message: 'Error generating test PDF', error: error.message });
   }
 });
 
@@ -181,7 +584,7 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.get('/api/user-pdf/:userId', async (req, res) => {
+app.get('/api/download-pdf/:userId', async (req, res) => {
   try {
     const user = await User.findById(req.params.userId, { pdfFile: 1, pdfFileName: 1 });
     if (!user || !user.pdfFile) {
