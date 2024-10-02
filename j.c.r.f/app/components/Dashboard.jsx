@@ -1,12 +1,12 @@
 //Dashboard.jsx
-// import { Button, Dialog } from '@mui/material';
 import {
   Button,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
@@ -15,16 +15,52 @@ import API_URL from './api-config';
 const Dashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAll, setDeleteAll] = useState(false);
 
   const handleFileSelect = (event) => {
     setSelectedFile(event.target.files[0]);
+  };
+
+  const handleDeleteSelected = () => {
+    setDeleteAll(false);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteAll = () => {
+    setDeleteAll(true);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const userIds = deleteAll ? [] : selectedRows;
+      const response = await fetch(`${API_URL}/api/users`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userIds: deleteAll ? [] : selectedRows }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete users');
+      }
+
+      const result = await response.json();
+      alert(result.message);
+      setDeleteDialogOpen(false);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting users:', error);
+      alert('Error deleting users');
+    }
   };
 
   const handleUploadTemplate = async () => {
@@ -55,17 +91,17 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, pageSize]);
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/users?page=${page + 1}&limit=${pageSize}`);
+      const response = await fetch(`${API_URL}/api/users`);
       const data = await response.json();
       
       const formattedUsers = data.users.map((user, index) => ({
         ...user,
-        id: (page * pageSize) + index + 1,
+        id: index + 1,
         attendChurch: user.attendChurch ? "Yes" : "No",
         newBirth: user.newBirth ? "Yes" : "No",
         waterBaptism: user.waterBaptism ? "Yes" : "No",
@@ -78,7 +114,7 @@ const Dashboard = ({ onLogout }) => {
       }));
       
       setUsers(formattedUsers);
-      setTotalPages(data.totalPages);
+      setTotalUsers(data.users.length);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
@@ -204,28 +240,46 @@ const Dashboard = ({ onLogout }) => {
 
   return (
     <div className="p-6 max-w-full mx-auto mt-16">
-    <div className="flex justify-between items-center mb-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <div>
-        <Button
-          onClick={() => setUploadDialogOpen(true)}
-          variant="contained"
-          color="primary"
-          className="mr-4"
-        >
-          Upload Template
-        </Button>
-        <Button
-          onClick={onLogout}
-          variant="contained"
-          color="secondary"
-        >
-          Log Out
-        </Button>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div>
+          <Button
+            onClick={() => setUploadDialogOpen(true)}
+            variant="contained"
+            color="primary"
+            className="mr-4"
+          >
+            Upload Template
+          </Button>
+          <Button
+            onClick={handleDeleteSelected}
+            variant="contained"
+            color="secondary"
+            disabled={selectedRows.length === 0}
+            className="mr-4"
+          >
+            Delete Selected
+          </Button>
+          <Button
+            onClick={handleDeleteAll}
+            variant="contained"
+            color="error"
+            className="mr-4"
+          >
+            Delete All
+          </Button>
+          <Button
+            onClick={onLogout}
+            variant="contained"
+            color="secondary"
+          >
+            Log Out
+          </Button>
+        </div>
       </div>
-    </div>
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
+        <p className="text-lg mb-4">Total number of documents: {totalUsers}</p>
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <CircularProgress />
@@ -235,14 +289,9 @@ const Dashboard = ({ onLogout }) => {
             <DataGrid
               rows={users}
               columns={columns}
-              pageSize={pageSize}
-              rowsPerPageOptions={[10, 25, 50]}
               checkboxSelection
               disableSelectionOnClick
-              paginationMode="server"
-              rowCount={totalPages * pageSize}
-              onPageChange={(newPage) => setPage(newPage)}
-              onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+              onSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
               loading={loading}
               rowHeight={80}
             />
@@ -269,6 +318,25 @@ const Dashboard = ({ onLogout }) => {
             disabled={!selectedFile || uploadLoading}
           >
             {uploadLoading ? 'Uploading...' : 'Upload'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {deleteAll
+              ? "Are you sure you want to delete all users? This action cannot be undone."
+              : `Are you sure you want to delete ${selectedRows.length} selected user(s)? This action cannot be undone.`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error">
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
