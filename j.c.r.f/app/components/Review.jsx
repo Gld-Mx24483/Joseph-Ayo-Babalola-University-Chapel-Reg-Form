@@ -88,7 +88,7 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
         firstname: firstName,
         from_name: 'Chaplaincy',
         email: email,
-        message: `Your registration was successful. Please check your email for your registration PDF.`,
+        message: `Your registration was successful.`,
         pdfUrl: `${API_URL}/api/download-pdf/${userId}`,
         reply_to: 'noreply@example.com',
       };
