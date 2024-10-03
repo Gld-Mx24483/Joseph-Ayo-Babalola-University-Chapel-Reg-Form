@@ -581,14 +581,14 @@
    
 // export default Review;
 
+//Review.jsx
 import axios from 'axios';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { AlertCircle, CheckCircle, Download, X } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import API_URL from './api-config';
 import { personalStyles } from './PersonalStyles';
-
-const Html2Pdf = dynamic(() => import('html2pdf.js'), { ssr: false });
 
 const CLOUDINARY_UPLOAD_PRESET = 'jabu_chapel_preset';
 const CLOUDINARY_CLOUD_NAME = 'dui4el4tx';
@@ -712,6 +712,7 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.4;
             color: #333;
+            font-size: 10px;
           }
           .container {
             width: 100%;
@@ -721,30 +722,30 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
           }
           .header {
             text-align: left;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
           }
           h1 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 24px;
+            margin-bottom: 5px;
+            font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
             line-height: 1.2;
           }
           .header-line {
-            border-bottom: 2px solid #333;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
           }
           .timestamp {
             color: #718096;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 10px;
+            margin-bottom: 10px;
           }
           .content {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             position: relative;
-            min-height: 150px;
+            min-height: 100px;
           }
           .details span {
             font-weight: bold;
@@ -752,9 +753,9 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
           .image-container {
             position: absolute;
             top: 0;
-            right: 30px;
-            width: 150px;
-            height: 150px;
+            right: 10px;
+            width: 80px;
+            height: 100px;
             border: 1px solid #333;
           }
           .passport-img {
@@ -764,29 +765,29 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
           }
           .letter-body {
             clear: both;
-            margin-top: 60px;
+            margin-top: 30px;
           }
           .letter-body p:last-child {
-            margin-top: 60px;
+            margin-top: 30px;
           }
           .signature-section {
-            margin-top: 150px;
+            margin-top: 50px;
             display: flex;
             justify-content: space-between;
             width: 100%;
           }
           .signature {
-            width: 180px;
+            width: 120px;
             text-align: center;
           }
           .signature-line {
             width: 100%;
             border-bottom: 1px solid #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
           }
           .signature p {
             margin: 0;
-            font-size: 14px;
+            font-size: 10px;
             text-align: center;
             width: 100%;
           }
@@ -874,33 +875,51 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
 
   const handleDownload = async () => {
     try {
+      setIsLoading(true);
       const response = await axios.get(`${API_URL}/api/download-html/${userId}`);
       const htmlContent = response.data;
       
-      if (typeof window !== 'undefined') {
-        const container = document.createElement('div');
-        container.innerHTML = htmlContent;
-        document.body.appendChild(container);
-        
-        const options = {
-          margin: 10,
-          filename: 'chaplaincy_registration.pdf',
-          image: { type: 'jpeg', quality: 2 },
-          html2canvas: { scale: 2, useCORS: true, logging: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        const html2pdf = await Html2Pdf();
-        await html2pdf().set(options).from(container).save();
-        
-        document.body.removeChild(container);
+      const container = document.createElement('div');
+      container.innerHTML = htmlContent;
+      document.body.appendChild(container);
+      
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: true
+      });
+      
+      document.body.removeChild(container);
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, position, imgWidth, imgHeight, '', 'FAST');
+        heightLeft -= pageHeight;
       }
+      
+      pdf.save('chaplaincy_registration.pdf');
     } catch (error) {
       console.error('Error downloading document:', error);
       setErrorMessage('Error downloading document. Please try again.');
       setShowErrorDialog(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className={personalStyles.modalOverlay}>
