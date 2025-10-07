@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @next/next/no-img-element */
 // Dashboard.jsx
 import {
   Button,
@@ -7,6 +9,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
@@ -27,12 +31,13 @@ const Dashboard = ({ onLogout }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10000);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentSession, setCurrentSession] = useState('2024/25');
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${API_URL}/api/users?page=${page + 1}&limit=${pageSize}`
+        `${API_URL}/api/users?page=${page + 1}&limit=${pageSize}&session=${currentSession}`
       );
       const data = await response.json();
       
@@ -62,7 +67,7 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, pageSize]);
+  }, [page, pageSize, currentSession]);
 
   const handleFileSelect = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -269,6 +274,18 @@ const Dashboard = ({ onLogout }) => {
         {activeTab === 'dashboard' ? (
           <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-2xl text-black font-semibold mb-6">Chapel Registration</h2>
+            <div className="flex items-center mb-4">
+              <span className="mr-2 text-lg">Session:</span>
+              <Select
+                value={currentSession}
+                onChange={(e) => setCurrentSession(e.target.value)}
+                variant="outlined"
+                size="small"
+              >
+                <MenuItem value="2024/25">2024/25</MenuItem>
+                <MenuItem value="2025/26">2025/26</MenuItem>
+              </Select>
+            </div>
             <p className="text-lg mb-4">Total number of documents: {totalUsers}</p>
             
             {loading ? (
