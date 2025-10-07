@@ -25,7 +25,7 @@ const Hero = () => {
         </h1>
         <div className={`${heroStyles.separator} ${heroStyles.growWidth}`}></div>
         <p className={`${heroStyles.subtitle} ${heroStyles.fadeInUp}`}>
-          STUDENT&#39;S REGISTRATION FORM 2024/25 SESSION
+          STUDENT&#39;S REGISTRATION FORM 2025/26 SESSION
         </p>
       </div>
     </div>
