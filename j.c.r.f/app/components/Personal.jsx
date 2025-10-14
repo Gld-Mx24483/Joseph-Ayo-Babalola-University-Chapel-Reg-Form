@@ -16,7 +16,10 @@ const collegesAndDepartments = {
     'Hotel Management and Tourism',
     'Industrial Chemistry',
     'Microbiology',
-    'Physics Electronics'
+    'Physics Electronics',
+    'Cyber security', 
+    'Data Science ',
+    'Hotel Management & Tourism'
   ],
   'Environmental Sciences': [
     'Architecture',
@@ -26,7 +29,10 @@ const collegesAndDepartments = {
   ],
   'Health Sciences': [
     'Medical Laboratory Science',
-    'Nursing'
+    'Nursing',
+    'Environmental health',
+    'Health Information Management',
+    'Public Health'
   ],
   'Humanities and Social Sciences': [
     'Economics',
@@ -364,7 +370,7 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
           <RadioGroup
             name="level"
             label="Level"
-            options={['100', '200', '300', '400', '500']}
+            options={['JUPEB', '100', '200', '300', '400', '500']}
             required
             number="15"
           />
