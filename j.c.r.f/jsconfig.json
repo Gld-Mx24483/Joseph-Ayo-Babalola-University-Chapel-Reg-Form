@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "checkJs": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
-  }
+    },
+    "typeRoots": ["./node_modules/@types"]
+  },
+  "include": ["./**/*"]
 }
