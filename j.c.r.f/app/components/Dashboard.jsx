@@ -16,6 +16,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import Analytics from './Analytics';
 import API_URL from './api-config';
+import { CURRENT_SESSION, SESSIONS } from './session-config';
 
 const Dashboard = ({ onLogout }) => {
   const [users, setUsers] = useState([]);
@@ -31,7 +32,7 @@ const Dashboard = ({ onLogout }) => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10000);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentSession, setCurrentSession] = useState('2024/25');
+  const [currentSession, setCurrentSession] = useState(CURRENT_SESSION);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -282,8 +283,9 @@ const Dashboard = ({ onLogout }) => {
                 variant="outlined"
                 size="small"
               >
-                <MenuItem value="2024/25">2024/25</MenuItem>
-                <MenuItem value="2025/26">2025/26</MenuItem>
+                {SESSIONS.map((session) => (
+                  <MenuItem key={session} value={session}>{session}</MenuItem>
+                ))}
               </Select>
             </div>
             <p className="text-lg mb-4">Total number of documents: {totalUsers}</p>

@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
+import { CURRENT_SESSION } from './session-config';
 
 const collegesAndDepartments = {
   'Agriculture and Natural Sciences': [
@@ -274,7 +275,7 @@ const Personal = ({ isOpen, onClose, onNext, onPrevious, initialData }) => {
         <button onClick={onClose} className={personalStyles.closeButton}>
           <X size={20} className="sm:w-6 sm:h-6" />
         </button>
-        <h2 className={personalStyles.mainHeading}>STUDENT&#39;S REGISTRATION FORM 2025/26 SESSION</h2>
+        <h2 className={personalStyles.mainHeading}>STUDENT&#39;S REGISTRATION FORM {CURRENT_SESSION} SESSION</h2>
         <h3 className={personalStyles.subHeading}>Personal Section</h3>
         
         <form onSubmit={handleSubmit(onSubmit)} className={personalStyles.form}>

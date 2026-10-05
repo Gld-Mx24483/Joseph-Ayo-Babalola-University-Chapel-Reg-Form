@@ -107,7 +107,7 @@ function convertHtmlToPdf(html) {
 
 // Updated User Schema with session field
 const userSchema = new mongoose.Schema({
-  session: { type: String, required: true, default: '2024/25' }, // NEW FIELD
+  session: { type: String, required: true, default: () => getSessionForDate() },
   firstName: { type: String, required: true, default: 'N/A' },
   surname: { type: String, required: true, default: 'N/A' },
   middleName: { type: String, default: 'N/A' },
@@ -171,14 +171,42 @@ userSchema.index({ session: 1 });
 
 const User = mongoose.model('User', userSchema, 'registration');
 
-// Migration function to update existing records (run once)
+// Academic sessions start on 1 August: Aug 2025 – Jul 2026 is "2025/26"
+const SESSION_START_MONTH = 8;
+
+function getSessionForDate(date = new Date()) {
+  const startYear = date.getMonth() + 1 >= SESSION_START_MONTH ? date.getFullYear() : date.getFullYear() - 1;
+  return `${startYear}/${String(startYear + 1).slice(-2)}`;
+}
+
+// Records created before the form started sending a session were all stamped "2024/25".
+// Re-derive their session from createdAt so each one lands in the right tab.
+const SESSION_BACKFILL_CUTOFF = new Date('2026-10-06T00:00:00Z');
+
 async function migrateExistingData() {
   try {
-    const result = await User.updateMany(
-      { session: { $exists: false } },
-      { $set: { session: '2024/25' } }
+    const startYear = {
+      $cond: [
+        { $gte: [{ $month: '$createdAt' }, SESSION_START_MONTH] },
+        { $year: '$createdAt' },
+        { $subtract: [{ $year: '$createdAt' }, 1] }
+      ]
+    };
+    const derivedSession = {
+      $concat: [
+        { $toString: startYear },
+        '/',
+        { $substrCP: [{ $toString: { $add: [startYear, 1] } }, 2, 2] }
+      ]
+    };
+    const result = await User.collection.updateMany(
+      {
+        createdAt: { $lt: SESSION_BACKFILL_CUTOFF },
+        $expr: { $ne: ['$session', derivedSession] }
+      },
+      [{ $set: { session: derivedSession } }]
     );
-    console.log(`Migration complete: ${result.modifiedCount} documents updated with session 2024/25`);
+    console.log(`Migration complete: ${result.modifiedCount} documents re-assigned to their session by createdAt`);
   } catch (error) {
     console.error('Error during migration:', error);
   }
@@ -231,7 +259,7 @@ app.post('/api/submit-form', async (req, res) => {
     const newUser = new User({
       ...formData,
       htmlContent,
-      session: session || '2024/25' // Default to 2024/25 if not provided
+      session: session || getSessionForDate()
     });
     await newUser.save();
 
@@ -275,7 +303,7 @@ app.get('/api/users', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10000;
-    const session = req.query.session || '2024/25';
+    const session = req.query.session || getSessionForDate();
     const skip = (page - 1) * limit;
 
     // Build query filter

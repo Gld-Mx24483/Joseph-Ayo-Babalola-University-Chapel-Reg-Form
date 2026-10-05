@@ -241,6 +241,7 @@ import { AlertCircle, CheckCircle, Download, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import API_URL from './api-config';
 import { personalStyles } from './PersonalStyles';
+import { CURRENT_SESSION } from './session-config';
 
 const CLOUDINARY_UPLOAD_PRESET = 'jabu_chapel_preset';
 const CLOUDINARY_CLOUD_NAME = 'dui4el4tx';
@@ -509,7 +510,8 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
       const formDataToSend = {
         ...formData,
         passportUrl,
-        htmlContent
+        htmlContent,
+        session: CURRENT_SESSION
       };
       delete formDataToSend.passport;
 

@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import backgroundImage from '../assets/jabu-auditorium.jpg';
 import { heroStyles } from './HeroStyles';
+import { CURRENT_SESSION } from './session-config';
 
 const Hero = () => {
   return (
@@ -25,7 +26,7 @@ const Hero = () => {
         </h1>
         <div className={`${heroStyles.separator} ${heroStyles.growWidth}`}></div>
         <p className={`${heroStyles.subtitle} ${heroStyles.fadeInUp}`}>
-          STUDENT&#39;S REGISTRATION FORM 2025/26 SESSION
+          STUDENT&#39;S REGISTRATION FORM {CURRENT_SESSION} SESSION
         </p>
       </div>
     </div>
