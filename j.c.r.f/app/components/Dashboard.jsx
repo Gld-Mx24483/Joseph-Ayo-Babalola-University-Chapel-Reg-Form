@@ -90,13 +90,13 @@ const Dashboard = ({ onLogout }) => {
 
   const handleDeleteConfirm = async () => {
     try {
-      const userIds = deleteAll ? [] : selectedRows;
+      const body = deleteAll ? { session: currentSession } : { userIds: selectedRows };
       const response = await fetch(`${API_URL}/api/users`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userIds }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -364,7 +364,7 @@ const Dashboard = ({ onLogout }) => {
         <DialogContent>
           <DialogContentText>
           {deleteAll
-              ? "Are you sure you want to delete all users? This action cannot be undone."
+              ? `Are you sure you want to delete all ${totalUsers} user(s) in the ${currentSession} session? This action cannot be undone.`
               : `Are you sure you want to delete ${selectedRows.length} selected user(s)? This action cannot be undone.`}
           </DialogContentText>
         </DialogContent>
