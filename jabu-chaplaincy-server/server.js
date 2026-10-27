@@ -163,13 +163,16 @@ const userSchema = new mongoose.Schema({
   specialDietOrTreatment: { type: String, default: 'N/A' },
   htmlContent: { type: String, required: true },
   // Yes/No answers that were lost before they were stored correctly (see markUnknownAnswers)
-  unknownAnswers: { type: [String], default: undefined }
+  unknownAnswers: { type: [String], default: undefined },
+  // Identifies the same student within a session (see getIdentityKey) so resubmissions don't duplicate
+  identityKey: { type: String }
 }, {
   timestamps: true
 });
 
 // Create index on session for better query performance
 userSchema.index({ session: 1 });
+userSchema.index({ session: 1, identityKey: 1 });
 
 const User = mongoose.model('User', userSchema, 'registration');
 
@@ -238,7 +241,7 @@ app.options('*', cors());
 
 const BOOLEAN_FIELDS = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
 const DATE_FIELDS = ['dob', 'churchStartDate', 'newBirthDate', 'waterBaptismDate'];
-const EDITABLE_FIELDS = Object.keys(userSchema.paths).filter(field => !['_id', '__v', 'createdAt', 'updatedAt', 'unknownAnswers'].includes(field));
+const EDITABLE_FIELDS = Object.keys(userSchema.paths).filter(field => !['_id', '__v', 'createdAt', 'updatedAt', 'unknownAnswers', 'identityKey'].includes(field));
 
 // The form sends "Yes"/"No"; older clients sent "true"/"false"
 function toBoolean(value) {
@@ -260,9 +263,29 @@ function normalizeUserFields(data) {
   return data;
 }
 
+// Same student = same first name, surname and date of birth (case and outer spaces ignored).
+// Keep in sync with the $toLower/$trim pipeline in backfillIdentityKeys.
+function getIdentityKey({ firstName, surname, dob }) {
+  return [firstName, surname, dob].map(value => String(value ?? '').trim().toLowerCase()).join('|');
+}
+
+async function backfillIdentityKeys() {
+  try {
+    const normalized = (field) => ({ $toLower: { $trim: { input: { $toString: { $ifNull: [`$${field}`, ''] } } } } });
+    const result = await User.collection.updateMany(
+      { identityKey: { $exists: false } },
+      [{ $set: { identityKey: { $concat: [normalized('firstName'), '|', normalized('surname'), '|', normalized('dob')] } } }]
+    );
+    console.log(`Backfilled identityKey on ${result.modifiedCount} documents`);
+  } catch (error) {
+    console.error('Error backfilling identity keys:', error);
+  }
+}
+
 // Run migrations on startup
 migrateExistingData();
 markUnknownAnswers();
+backfillIdentityKeys();
 
 /**
  * @swagger
@@ -293,11 +316,27 @@ app.post('/api/submit-form', async (req, res) => {
       formData[field] = formatDate(formData[field]);
     });
 
-    // Create new user with HTML content and session
+    const userSession = session || getSessionForDate();
+    const identityKey = getIdentityKey(formData);
+
+    // A student who submits again (lost slip, retry on a slow network, double tap) updates
+    // their existing registration instead of creating a duplicate
+    const existingUser = await User.findOne({ session: userSession, identityKey });
+    if (existingUser) {
+      if (!formData.passportUrl) {
+        delete formData.passportUrl;
+      }
+      existingUser.set({ ...formData, htmlContent });
+      existingUser.set('unknownAnswers', undefined);
+      await existingUser.save();
+      return res.status(200).json({ message: 'Registration updated successfully', user: existingUser, updated: true });
+    }
+
     const newUser = new User({
       ...formData,
       htmlContent,
-      session: session || getSessionForDate()
+      identityKey,
+      session: userSession
     });
     await newUser.save();
 
@@ -400,6 +439,11 @@ app.put('/api/users/:id', async (req, res) => {
       return res.status(400).json({ message: 'Invalid registration id' });
     }
 
+    const existingUser = await User.findById(req.params.id).lean();
+    if (!existingUser) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+
     const updates = {};
     EDITABLE_FIELDS.forEach(field => {
       if (field in req.body) {
@@ -411,6 +455,8 @@ app.put('/api/users/:id', async (req, res) => {
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ message: 'No editable fields provided' });
     }
+
+    updates.identityKey = getIdentityKey({ ...existingUser, ...updates });
 
     // An answer the admin sets is no longer unknown
     const answeredFields = BOOLEAN_FIELDS.filter(field => field in updates);

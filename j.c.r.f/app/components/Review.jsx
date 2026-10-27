@@ -238,7 +238,7 @@ import axios from 'axios';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { AlertCircle, CheckCircle, Download, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import API_URL from './api-config';
 import { personalStyles } from './PersonalStyles';
 import { CURRENT_SESSION } from './session-config';
@@ -247,7 +247,7 @@ import { generateSlipHTML } from './slip-template';
 const CLOUDINARY_UPLOAD_PRESET = 'jabu_chapel_preset';
 const CLOUDINARY_CLOUD_NAME = 'dui4el4tx';
 
-const SuccessDialog = ({ onClose, onDownload }) => (
+const SuccessDialog = ({ onClose, onDownload, updated }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div className="bg-white rounded-lg p-8 max-w-xs w-full sm:max-w-sm md:max-w-md">
       <div className="flex items-center mb-4">
@@ -255,7 +255,9 @@ const SuccessDialog = ({ onClose, onDownload }) => (
         <h3 className="text-2xl font-extrabold text-gray-900">Success!</h3>
       </div>
       <p className="text-gray-700 text-lg mb-6 font-semibold">
-        Your form has been successfully submitted.
+        {updated
+          ? 'You had already registered this session, so your existing registration has been updated. Please download your slip now.'
+          : 'Your form has been successfully submitted. Please download your slip now.'}
       </p>
       <div className="flex flex-col space-y-4">
         <button
@@ -311,6 +313,9 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [wasUpdated, setWasUpdated] = useState(false);
+  // State updates are async, so a quick double tap could otherwise submit twice
+  const submittingRef = useRef(false);
 
   useEffect(() => {
   }, []);
@@ -343,6 +348,8 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
   };
 
   const handleSubmit = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsLoading(true);
     try {
       let passportUrl = '';
@@ -372,12 +379,14 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
 
       const response = await axios.post(`${API_URL}/api/submit-form`, formDataToSend);
       setUserId(response.data.user._id);
+      setWasUpdated(Boolean(response.data.updated));
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error submitting form:', error);
       setErrorMessage(error.response?.data?.message || 'An error occurred while submitting the form.');
       setShowErrorDialog(true);
     } finally {
+      submittingRef.current = false;
       setIsLoading(false);
     }
   };
@@ -496,6 +505,7 @@ const Review = ({ isOpen, onClose, formData, onEdit }) => {
             onClose(); 
           }} 
           onDownload={handleDownload}
+          updated={wasUpdated}
         />
       }
       {showErrorDialog && 
