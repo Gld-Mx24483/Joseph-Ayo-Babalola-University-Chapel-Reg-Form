@@ -282,10 +282,18 @@ async function backfillIdentityKeys() {
   }
 }
 
-// Run migrations on startup
-migrateExistingData();
-markUnknownAnswers();
-backfillIdentityKeys();
+// Run migrations on startup. On Vercel the function is frozen once a response is sent, so
+// requests wait for them; otherwise they could be paused part-way and never finish.
+const migrationsDone = Promise.all([
+  migrateExistingData(),
+  markUnknownAnswers(),
+  backfillIdentityKeys()
+]);
+
+app.use(async (req, res, next) => {
+  await migrationsDone;
+  next();
+});
 
 /**
  * @swagger
