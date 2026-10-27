@@ -20,7 +20,7 @@ app.listen(PORT, () => {
 
 app.use(cors({
   origin: ['https://jabu-chapel-reg-form.vercel.app', 'http://localhost:3000'],
-  methods: ['GET', 'POST','DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -217,6 +217,30 @@ migrateExistingData();
 
 app.options('*', cors());
 
+const BOOLEAN_FIELDS = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
+const DATE_FIELDS = ['dob', 'churchStartDate', 'newBirthDate', 'waterBaptismDate'];
+const EDITABLE_FIELDS = Object.keys(userSchema.paths).filter(field => !['_id', '__v', 'createdAt', 'updatedAt'].includes(field));
+
+// The form sends "Yes"/"No"; older clients sent "true"/"false"
+function toBoolean(value) {
+  return value === true || ['true', 'yes'].includes(String(value).trim().toLowerCase());
+}
+
+// Converts boolean and date fields present in data, in place
+function normalizeUserFields(data) {
+  BOOLEAN_FIELDS.forEach(field => {
+    if (field in data) {
+      data[field] = toBoolean(data[field]);
+    }
+  });
+  DATE_FIELDS.forEach(field => {
+    if (field in data && data[field]) {
+      data[field] = formatDate(data[field]) || data[field];
+    }
+  });
+  return data;
+}
+
 /**
  * @swagger
  * /api/submit-form:
@@ -241,17 +265,8 @@ app.post('/api/submit-form', async (req, res) => {
   try {
     const { htmlContent, session, ...formData } = req.body;
 
-    // Convert boolean fields
-    const booleanFields = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
-    booleanFields.forEach(field => {
-      if (field in formData) {
-        formData[field] = formData[field] === 'true' || formData[field] === true;
-      }
-    });
-
-    // Format date fields
-    const dateFields = ['dob', 'churchStartDate', 'newBirthDate', 'waterBaptismDate'];
-    dateFields.forEach(field => {
+    normalizeUserFields(formData);
+    DATE_FIELDS.forEach(field => {
       formData[field] = formatDate(formData[field]);
     });
 
@@ -329,6 +344,65 @@ app.get('/api/users', async (req, res) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Error fetching users', error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Update fields of a registration (admin correction)
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Any registration fields to change; unknown fields are ignored
+ *     responses:
+ *       200:
+ *         description: Updated registration
+ *       404:
+ *         description: Registration not found
+ */
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid registration id' });
+    }
+
+    const updates = {};
+    EDITABLE_FIELDS.forEach(field => {
+      if (field in req.body) {
+        updates[field] = req.body[field];
+      }
+    });
+    normalizeUserFields(updates);
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'No editable fields provided' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+
+    res.json({ message: 'Registration updated successfully', user });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'Error updating registration', error: error.message });
   }
 });
 

@@ -4,56 +4,9 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { personalStyles } from './PersonalStyles';
+import { collegesAndDepartments } from './form-options';
 import { CURRENT_SESSION } from './session-config';
 
-const collegesAndDepartments = {
-  'Agriculture and Natural Sciences': [
-    'Agricultural Economics',
-    'Animal Science',
-    'Biochemistry',
-    'Computer Science',
-    'Crop Science',
-    'Food Science and Technology',
-    'Hotel Management and Tourism',
-    'Industrial Chemistry',
-    'Microbiology',
-    'Physics Electronics',
-    'Cyber security', 
-    'Data Science ',
-    'Hotel Management & Tourism'
-  ],
-  'Environmental Sciences': [
-    'Architecture',
-    'Building',
-    'Estate Management',
-    'Quantity Survey'
-  ],
-  'Health Sciences': [
-    'Medical Laboratory Science',
-    'Nursing',
-    'Environmental health',
-    'Health Information Management',
-    'Public Health'
-  ],
-  'Humanities and Social Sciences': [
-    'Economics',
-    'English',
-    'History and International Studies',
-    'International Relations',
-    'Mass Communication',
-    'Political Science',
-    'Public Administration',
-    'Philosophy & Religious Studies'
-  ],
-  'Law': ['Law'],
-  'Management Sciences': [
-    'Accounting',
-    'Business Administration',
-    'Entrepreneurship',
-    'Human Resource Management and Industrial Relations',
-    'Insurance'
-  ]
-};
 
 const DropdownModal = ({ isOpen, options, value, onChange, onClose, label }) => {
   useEffect(() => {

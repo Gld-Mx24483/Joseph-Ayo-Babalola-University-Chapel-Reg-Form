@@ -9,17 +9,51 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  InputAdornment,
   MenuItem,
   Select,
+  TextField,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Analytics from './Analytics';
 import API_URL from './api-config';
+import EditUserDialog from './EditUserDialog';
 import { CURRENT_SESSION, SESSIONS } from './session-config';
 
+const BOOLEAN_FIELDS = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
+
+const SEARCH_FIELDS = {
+  all: { label: 'All fields', fields: ['firstName', 'surname', 'middleName', 'matricNo', 'phoneNo', 'whatsappNo', 'email', 'department', 'college', 'level', 'stateOfOrigin', 'homeTown', 'hostel', 'sponsorName', 'sponsorPhone'] },
+  name: { label: 'Name', fields: ['firstName', 'surname', 'middleName'] },
+  matricNo: { label: 'Matric No', fields: ['matricNo'] },
+  phone: { label: 'Phone Number', fields: ['phoneNo', 'whatsappNo'] },
+  email: { label: 'Email', fields: ['email'] },
+  department: { label: 'Department', fields: ['department'] },
+  college: { label: 'College', fields: ['college'] },
+  level: { label: 'Level', fields: ['level'] },
+  stateOfOrigin: { label: 'State of Origin', fields: ['stateOfOrigin'] },
+  hostel: { label: 'Hostel', fields: ['hostel'] },
+};
+
+const formatUser = (user) => {
+  const formatted = { ...user, id: user._id };
+  BOOLEAN_FIELDS.forEach((field) => {
+    formatted[field] = user[field] ? 'Yes' : 'No';
+  });
+  return formatted;
+};
+
+const normalize = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+// Every word in the search must appear in one of the fields, so "john ade" finds "Ade John"
+const matchesSearch = (user, words, fields) => {
+  const haystack = fields.map((field) => normalize(user[field])).join(' | ');
+  return words.every((word) => haystack.includes(word));
+};
+
 const Dashboard = ({ onLogout }) => {
-  const [users, setUsers] = useState([]);
+  const [rawUsers, setRawUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -29,8 +63,10 @@ const Dashboard = ({ onLogout }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10000);
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
+  const [search, setSearch] = useState('');
+  const [searchField, setSearchField] = useState('all');
+  const [editingUser, setEditingUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentSession, setCurrentSession] = useState(CURRENT_SESSION);
 
@@ -38,29 +74,15 @@ const Dashboard = ({ onLogout }) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${API_URL}/api/users?page=${page + 1}&limit=${pageSize}&session=${currentSession}`
+        `${API_URL}/api/users?page=1&limit=10000&session=${encodeURIComponent(currentSession)}`
       );
       const data = await response.json();
-      
-      const formattedUsers = data.users.map((user) => ({
-        ...user,
-        id: user._id,
-        attendChurch: user.attendChurch ? "Yes" : "No",
-        newBirth: user.newBirth ? "Yes" : "No",
-        waterBaptism: user.waterBaptism ? "Yes" : "No",
-        communicant: user.communicant ? "Yes" : "No",
-        holySpirit: user.holySpirit ? "Yes" : "No",
-        churchDiscipline: user.churchDiscipline ? "Yes" : "No",
-        bothParentsAlive: user.bothParentsAlive ? "Yes" : "No",
-        hasPhysicalDefect: user.hasPhysicalDefect ? "Yes" : "No",
-        oftenIll: user.oftenIll ? "Yes" : "No",
-      }));
-      
-      setUsers(formattedUsers);
+
+      setRawUsers(data.users);
       setTotalUsers(data.totalRows);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setUsers([]);
+      setRawUsers([]);
     } finally {
       setLoading(false);
     }
@@ -68,7 +90,36 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, pageSize, currentSession]);
+  }, [currentSession]);
+
+  const users = useMemo(() => rawUsers.map(formatUser), [rawUsers]);
+
+  const filteredUsers = useMemo(() => {
+    const words = normalize(search).split(' ').filter(Boolean);
+    if (words.length === 0) return users;
+    const fields = SEARCH_FIELDS[searchField].fields;
+    return users.filter((user) => matchesSearch(user, words, fields));
+  }, [users, search, searchField]);
+
+  useEffect(() => {
+    setPaginationModel((model) => ({ ...model, page: 0 }));
+  }, [search, searchField, currentSession]);
+
+  const handleEdit = (userId) => {
+    setEditingUser(rawUsers.find((user) => user._id === userId) || null);
+  };
+
+  const handleUserSaved = (updatedUser) => {
+    setRawUsers((prev) =>
+      updatedUser.session === currentSession
+        ? prev.map((user) => (user._id === updatedUser._id ? updatedUser : user))
+        : prev.filter((user) => user._id !== updatedUser._id)
+    );
+    if (updatedUser.session !== currentSession) {
+      setTotalUsers((count) => count - 1);
+    }
+    setEditingUser(null);
+  };
 
   const handleFileSelect = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -166,6 +217,18 @@ const Dashboard = ({ onLogout }) => {
 
   const columns = [
     { field: 'id', headerName: 'S/N', width: 70 },
+    {
+      field: 'edit',
+      headerName: 'Edit',
+      width: 90,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Button variant="outlined" size="small" onClick={() => handleEdit(params.row._id)}>
+          Edit
+        </Button>
+      ),
+    },
     { 
       field: 'passportUrl', 
       headerName: 'Passport', 
@@ -288,7 +351,36 @@ const Dashboard = ({ onLogout }) => {
                 ))}
               </Select>
             </div>
-            <p className="text-lg mb-4">Total number of documents: {totalUsers}</p>
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <TextField
+                placeholder="Search by name, matric no, phone, email, department..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                size="small"
+                className="flex-grow"
+                InputProps={{
+                  endAdornment: search ? (
+                    <InputAdornment position="end">
+                      <Button size="small" onClick={() => setSearch('')}>Clear</Button>
+                    </InputAdornment>
+                  ) : null,
+                }}
+              />
+              <Select
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value)}
+                size="small"
+                sx={{ minWidth: 180 }}
+              >
+                {Object.entries(SEARCH_FIELDS).map(([key, option]) => (
+                  <MenuItem key={key} value={key}>Search in: {option.label}</MenuItem>
+                ))}
+              </Select>
+            </div>
+            <p className="text-lg mb-4">
+              Total number of documents: {totalUsers}
+              {search.trim() && ` (showing ${filteredUsers.length} matching)`}
+            </p>
             
             {loading ? (
               <div className="flex justify-center items-center h-64">
@@ -297,20 +389,17 @@ const Dashboard = ({ onLogout }) => {
             ) : (
               <div style={{ height: 600, width: '100%' }}>
                 <DataGrid
-                  rows={users}
+                  rows={filteredUsers}
                   columns={columns}
                   checkboxSelection
-                  disableSelectionOnClick
-                  onSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
+                  disableRowSelectionOnClick
+                  onRowSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
                   loading={loading}
                   rowHeight={80}
                   pagination
-                  page={page}
-                  pageSize={pageSize}
-                  rowCount={totalUsers}
-                  paginationMode="server"
-                  onPageChange={(newPage) => setPage(newPage)}
-                  onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  pageSizeOptions={[25, 50, 100]}
                 />
               </div>
             )}
@@ -330,6 +419,12 @@ const Dashboard = ({ onLogout }) => {
           Log Out
         </Button>
       </div>
+
+      <EditUserDialog
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onSaved={handleUserSaved}
+      />
 
       <Dialog open={!!selectedImage} onClose={handleCloseImage} maxWidth="md" fullWidth>
         <img src={selectedImage} alt="Full-size passport" style={{ width: '100%', height: 'auto' }} />
