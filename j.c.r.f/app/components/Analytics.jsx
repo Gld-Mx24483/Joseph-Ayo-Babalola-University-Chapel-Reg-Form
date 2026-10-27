@@ -27,6 +27,7 @@ const Analytics = ({ users }) => {
     let femaleCount = 0;
     let newBirthCount = 0;
     let noNewBirthCount = 0;
+    let unknownNewBirthCount = 0;
     let totalStudents = users.length;
 
     users.forEach(user => {
@@ -45,6 +46,7 @@ const Analytics = ({ users }) => {
       // New Birth stats
       if (user.newBirth === 'Yes') newBirthCount++;
       if (user.newBirth === 'No') noNewBirthCount++;
+      if (user.newBirth === 'Unknown') unknownNewBirthCount++;
     });
 
     return {
@@ -57,7 +59,8 @@ const Analytics = ({ users }) => {
       ],
       newBirthData: [
         { name: 'Yes', value: newBirthCount },
-        { name: 'No', value: noNewBirthCount }
+        { name: 'No', value: noNewBirthCount },
+        ...(unknownNewBirthCount > 0 ? [{ name: 'Unknown', value: unknownNewBirthCount }] : [])
       ]
     };
   }, [users]);
@@ -112,7 +115,13 @@ const Analytics = ({ users }) => {
           icon={UserCheckIcon}
           title="New Birth"
           value={stats.newBirthData[0].value}
-          desc={`${((stats.newBirthData[0].value / stats.totalStudents) * 100).toFixed(1)}%`}
+          desc={(() => {
+            // Percentage of students whose answer is known; older records may be unknown
+            const answered = stats.newBirthData[0].value + stats.newBirthData[1].value;
+            const percent = answered ? ((stats.newBirthData[0].value / answered) * 100).toFixed(1) : '0.0';
+            const unknown = stats.totalStudents - answered;
+            return unknown > 0 ? `${percent}% of ${answered} answered (${unknown} unknown)` : `${percent}%`;
+          })()}
         />
       </div>
 

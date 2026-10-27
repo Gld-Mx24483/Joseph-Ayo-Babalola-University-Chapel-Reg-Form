@@ -107,10 +107,12 @@ const SLIP_FIELDS = ['firstName', 'surname', 'department', 'level', 'phoneNo', '
 const withCurrentValue = (options, value) =>
   value && !options.includes(value) ? [value, ...options] : options;
 
+// Unknown Yes/No answers start empty so the admin has to pick one
 const toFormValues = (user) =>
   ALL_FIELDS.reduce((values, field) => {
     const value = user[field.name];
-    values[field.name] = value === null || value === undefined ? '' : String(value);
+    const unknown = field.type === 'yesno' && (user.unknownAnswers || []).includes(field.name);
+    values[field.name] = unknown || value === null || value === undefined ? '' : String(value);
     return values;
   }, {});
 
@@ -189,8 +191,16 @@ const EditUserDialog = ({ user, onClose, onSaved }) => {
               field.name === 'department' ? collegesAndDepartments[values.college] || [] : field.options,
               value
             ).map((option) => ({ value: option, label: option }));
+      const unknown = field.type === 'yesno' && value === '';
       return (
-        <TextField key={field.name} {...common} select>
+        <TextField
+          key={field.name}
+          {...common}
+          select
+          InputLabelProps={unknown ? { shrink: true } : undefined}
+          SelectProps={unknown ? { displayEmpty: true, renderValue: () => 'Unknown' } : undefined}
+          helperText={unknown ? 'Not saved at registration. Pick the correct answer.' : undefined}
+        >
           {options.map((option) => (
             <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
           ))}

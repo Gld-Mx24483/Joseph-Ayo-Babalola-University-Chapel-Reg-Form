@@ -161,7 +161,9 @@ const userSchema = new mongoose.Schema({
   physicalDefectType: { type: String, default: 'N/A' },
   oftenIll: { type: Boolean, required: true, default: false },
   specialDietOrTreatment: { type: String, default: 'N/A' },
-  htmlContent: { type: String, required: true }
+  htmlContent: { type: String, required: true },
+  // Yes/No answers that were lost before they were stored correctly (see markUnknownAnswers)
+  unknownAnswers: { type: [String], default: undefined }
 }, {
   timestamps: true
 });
@@ -212,14 +214,31 @@ async function migrateExistingData() {
   }
 }
 
-// Run migration on startup
-migrateExistingData();
+// Until this deploy every Yes/No answer was saved as false. Records whose slip lists the
+// answers were recovered by scripts/recover-yes-no-answers.js; the rest are marked unknown.
+const BOOLEAN_FIX_DEPLOYED_AT = new Date('2026-10-27T19:47:00Z');
+
+async function markUnknownAnswers() {
+  try {
+    const result = await User.collection.updateMany(
+      {
+        unknownAnswers: { $exists: false },
+        createdAt: { $lt: BOOLEAN_FIX_DEPLOYED_AT },
+        htmlContent: { $not: /class="label"/ }
+      },
+      { $set: { unknownAnswers: BOOLEAN_FIELDS } }
+    );
+    console.log(`Marked Yes/No answers unknown on ${result.modifiedCount} documents`);
+  } catch (error) {
+    console.error('Error marking unknown answers:', error);
+  }
+}
 
 app.options('*', cors());
 
 const BOOLEAN_FIELDS = ['attendChurch', 'newBirth', 'waterBaptism', 'communicant', 'holySpirit', 'churchDiscipline', 'leadershipTraining', 'obeyInstructions', 'contributeToChapel', 'parentsLivingTogether', 'bothParentsAlive', 'hasPhysicalDefect', 'oftenIll'];
 const DATE_FIELDS = ['dob', 'churchStartDate', 'newBirthDate', 'waterBaptismDate'];
-const EDITABLE_FIELDS = Object.keys(userSchema.paths).filter(field => !['_id', '__v', 'createdAt', 'updatedAt'].includes(field));
+const EDITABLE_FIELDS = Object.keys(userSchema.paths).filter(field => !['_id', '__v', 'createdAt', 'updatedAt', 'unknownAnswers'].includes(field));
 
 // The form sends "Yes"/"No"; older clients sent "true"/"false"
 function toBoolean(value) {
@@ -240,6 +259,10 @@ function normalizeUserFields(data) {
   });
   return data;
 }
+
+// Run migrations on startup
+migrateExistingData();
+markUnknownAnswers();
 
 /**
  * @swagger
@@ -389,9 +412,16 @@ app.put('/api/users/:id', async (req, res) => {
       return res.status(400).json({ message: 'No editable fields provided' });
     }
 
+    // An answer the admin sets is no longer unknown
+    const answeredFields = BOOLEAN_FIELDS.filter(field => field in updates);
+    const update = { $set: updates };
+    if (answeredFields.length > 0) {
+      update.$pull = { unknownAnswers: { $in: answeredFields } };
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { $set: updates },
+      update,
       { new: true, runValidators: true }
     ).lean();
 

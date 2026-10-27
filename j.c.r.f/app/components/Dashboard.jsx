@@ -38,8 +38,13 @@ const SEARCH_FIELDS = {
 
 const formatUser = (user) => {
   const formatted = { ...user, id: user._id };
+  const unknownAnswers = user.unknownAnswers || [];
   BOOLEAN_FIELDS.forEach((field) => {
-    formatted[field] = user[field] ? 'Yes' : 'No';
+    if (unknownAnswers.includes(field)) {
+      formatted[field] = 'Unknown';
+    } else {
+      formatted[field] = user[field] ? 'Yes' : 'No';
+    }
   });
   return formatted;
 };
@@ -63,6 +68,8 @@ const Dashboard = ({ onLogout }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 100 });
   const [search, setSearch] = useState('');
   const [searchField, setSearchField] = useState('all');
@@ -89,6 +96,7 @@ const Dashboard = ({ onLogout }) => {
   };
 
   useEffect(() => {
+    setSelectedRows([]);
     fetchUsers();
   }, [currentSession]);
 
@@ -136,10 +144,12 @@ const Dashboard = ({ onLogout }) => {
 
   const handleDeleteAll = () => {
     setDeleteAll(true);
+    setDeleteConfirmText('');
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
+    setDeleting(true);
     try {
       const body = deleteAll ? { session: currentSession } : { userIds: selectedRows };
       const response = await fetch(`${API_URL}/api/users`, {
@@ -157,10 +167,13 @@ const Dashboard = ({ onLogout }) => {
       const result = await response.json();
       alert(result.message);
       setDeleteDialogOpen(false);
+      setSelectedRows([]);
       fetchUsers();
     } catch (error) {
       console.error('Error deleting users:', error);
       alert('Error deleting users');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -377,10 +390,30 @@ const Dashboard = ({ onLogout }) => {
                 ))}
               </Select>
             </div>
-            <p className="text-lg mb-4">
-              Total number of documents: {totalUsers}
-              {search.trim() && ` (showing ${filteredUsers.length} matching)`}
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <p className="text-lg">
+                Total number of documents: {totalUsers}
+                {search.trim() && ` (showing ${filteredUsers.length} matching)`}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedRows.length === 0}
+                >
+                  Delete Selected ({selectedRows.length})
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleDeleteAll}
+                  disabled={totalUsers === 0}
+                >
+                  Delete All in {currentSession}
+                </Button>
+              </div>
+            </div>
             
             {loading ? (
               <div className="flex justify-center items-center h-64">
@@ -393,6 +426,7 @@ const Dashboard = ({ onLogout }) => {
                   columns={columns}
                   checkboxSelection
                   disableRowSelectionOnClick
+                  rowSelectionModel={selectedRows}
                   onRowSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
                   loading={loading}
                   rowHeight={80}
@@ -453,20 +487,36 @@ const Dashboard = ({ onLogout }) => {
 
       <Dialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => !deleting && setDeleteDialogOpen(false)}
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
           {deleteAll
-              ? `Are you sure you want to delete all ${totalUsers} user(s) in the ${currentSession} session? This action cannot be undone.`
-              : `Are you sure you want to delete ${selectedRows.length} selected user(s)? This action cannot be undone.`}
+              ? `This will permanently delete ALL ${totalUsers} registration(s) in the ${currentSession} session, not just the ones shown by your search. This cannot be undone.`
+              : `Are you sure you want to delete ${selectedRows.length} selected registration(s)? This cannot be undone.`}
           </DialogContentText>
+          {deleteAll && (
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              margin="normal"
+              label={`Type ${currentSession} to confirm`}
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+            />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error">
-            Delete
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleting || (deleteAll && deleteConfirmText.trim() !== currentSession)}
+          >
+            {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
